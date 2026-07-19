@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensus | Setores</title>
+
+  <link rel="stylesheet" href="../css/styles.css">
+  <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-layout">
+    <div id="sidebar"></div>
+
+    <main class="main-content">
+      <div id="topbar"></div>
+
+      <section class="page-grid">
+        <div class="card" id="cadastroSetor">
+          <h2>Cadastrar Setor</h2>
+          <p style="color:#64748b; margin: 8px 0 22px;">
+            Informe o ambiente que será avaliado no checklist.
+          </p>
+
+          <form id="sectorForm">
+            <label for="sectorName"><strong>Nome do Setor</strong></label>
+            <input 
+              type="text" 
+              id="sectorName" 
+              class="form-control" 
+              placeholder="Ex: Almoxarifado, Recepção, Escritório..."
+              required
+            >
+
+            <label for="sectorDesc"><strong>Descrição</strong></label>
+            <textarea 
+              id="sectorDesc" 
+              class="form-control" 
+              placeholder="Descreva a finalidade e características do setor..."
+              rows="5"
+              required
+            ></textarea>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">
+              Salvar Setor
+            </button>
+          </form>
+        </div>
+
+        <div>
+          <h2 class="section-title" style="text-align:left; margin-top:0;">
+            Setores Cadastrados
+          </h2>
+
+          <div id="listaSetores" class="sector-grid">
+            <div class="card">
+              <p>Carregando setores...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p class="footer-text">
+        © 2026 Sensus 5S • Brenda, Wesllys e Saranna • TCC ADS UEMA
+      </p>
+    </main>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script>
+    renderSidebar("setores");
+    renderTopbar(
+      "Setores",
+      "Gerencie os ambientes avaliados nas auditorias 5S.",
+      "+ Novo Setor",
+      "#cadastroSetor"
+    );
+  </script>
+  <script src="../js/setores.js"></script>
+</body>
+</html>

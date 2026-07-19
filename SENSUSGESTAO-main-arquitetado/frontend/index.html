@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sensus | Login</title>
+
+  <link rel="stylesheet" href="./css/login.css" />
+  <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">⬡</div>
+      <span>SENSUS</span>
+    </div>
+
+    <nav>
+      <a href="#">Recursos</a>
+      <a href="#">Planos</a>
+      <a href="#">Suporte</a>
+    </nav>
+
+    <button class="btn-header" type="button">
+      <i class="icon-user"></i>
+      Entrar
+    </button>
+  </header>
+
+  <main class="main">
+    <div class="circle-yellow"></div>
+    <div class="circle-blue"></div>
+
+    <section class="hero">
+      <h1>
+        A metodologia que<br>
+        impulsiona <span>sua organização</span>
+      </h1>
+      <p>
+        Gestão da Qualidade & 5S • Login seguro para acompanhar<br>
+        produtividade e crescimento.
+      </p>
+    </section>
+
+    <section class="content">
+      <div class="info">
+        <div class="title-row">
+          <div class="round-icon">
+            <i class="icon-chart-no-axes-combined"></i>
+          </div>
+          <div>
+            <h2>Entrar na sua conta</h2>
+            <p>Bem-vindo(a)! <span>Acesse em segundos.</span></p>
+          </div>
+        </div>
+
+        <div class="benefit">
+          <div class="round-icon small">
+            <i class="icon-shield"></i>
+          </div>
+          <div>
+            <h3>Seguro e confiável</h3>
+            <p>Seus dados protegidos com criptografia de ponta a ponta.</p>
+          </div>
+        </div>
+
+        <div class="benefit">
+          <div class="round-icon small">
+            <i class="icon-bar-chart-3"></i>
+          </div>
+          <div>
+            <h3>Produtividade real</h3>
+            <p>Indicadores e relatórios para decisões mais inteligentes.</p>
+          </div>
+        </div>
+
+        <div class="benefit">
+          <div class="round-icon small">
+            <i class="icon-circle-check"></i>
+          </div>
+          <div>
+            <h3>Metodologia 5S</h3>
+            <p>Organização, eficiência e melhoria contínua no seu negócio.</p>
+          </div>
+        </div>
+
+        <div class="benefit">
+          <div class="round-icon small">
+            <i class="icon-users"></i>
+          </div>
+          <div>
+            <h3>Feito para o seu negócio</h3>
+            <p>Simples de usar, completo para gerar resultados.</p>
+          </div>
+        </div>
+      </div>
+
+      <form class="login-card" onsubmit="event.preventDefault(); efetuarLogin();">
+        <label for="userInput">E-mail ou Usuário</label>
+        <div class="input-box">
+          <i class="icon-mail"></i>
+          <input
+          id="userInput"
+          type="email"
+          value="admin@sensus.com"
+          autocomplete="email"
+          required/>
+        </div>
+        <small>Ex. nome@empresa.com</small>
+
+        <label for="passInput">Senha</label>
+        <div class="input-box">
+          <i class="icon-lock"></i>
+          <input
+          id="passInput"
+          type="password"
+          value="123456"
+          autocomplete="current-password"
+          required/>
+          <i class="icon-eye eye"></i>
+        </div>
+
+        <div class="options">
+          <label class="remember">
+            <input type="checkbox" />
+            Lembrar de mim
+          </label>
+          <a href="#">Esqueceu a senha?</a>
+        </div>
+
+        <button type="submit" class="btn-login">
+          Entrar
+          <i class="icon-arrow-right"></i>
+        </button>
+
+        <div class="divider">
+          <span></span>
+          <p>ou continue com</p>
+          <span></span>
+        </div>
+
+        <button type="button" class="btn-google">
+          <strong>G</strong>
+          Continuar com Google
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-logo">
+      <div class="logo-icon small-logo">⬡</div>
+      <p>© 2025 Sensus. Todos os direitos reservados.</p>
+    </div>
+
+    <div class="footer-links">
+      <a href="#">Privacidade</a>
+      <a href="#">Termos de uso</a>
+      <a href="#">Contato</a>
+    </div>
+  </footer>
+
+  <script src="./js/auth.js"></script>
+</body>
+</html>
