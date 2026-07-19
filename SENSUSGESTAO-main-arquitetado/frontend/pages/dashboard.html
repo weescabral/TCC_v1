@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Sensus | Dashboard Executivo</title>
+
+  <link rel="stylesheet" href="../css/styles.css">
+  <link
+    href="https://unpkg.com/lucide-static@latest/font/lucide.css"
+    rel="stylesheet"
+  >
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="app-layout">
+    <div id="sidebar"></div>
+
+    <main class="main-content">
+      <div id="topbar"></div>
+
+      <section class="stats-grid dashboard-kpis">
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <i class="icon-gauge"></i>
+          </div>
+
+          <div>
+            <small>Índice Atual</small>
+            <h2 id="indiceAtual">0%</h2>
+            <p id="classificacaoAtual">Sem auditorias finalizadas</p>
+          </div>
+        </article>
+
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <i class="icon-chart-no-axes-combined"></i>
+          </div>
+
+          <div>
+            <small>Média Geral</small>
+            <h2 id="mediaGeral">0%</h2>
+            <p>Média das auditorias finalizadas</p>
+          </div>
+        </article>
+
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <i class="icon-clipboard-check"></i>
+          </div>
+
+          <div>
+            <small>Auditorias Finalizadas</small>
+            <h2 id="totalAuditorias">0</h2>
+            <p>Ciclos concluídos no sistema</p>
+          </div>
+        </article>
+
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <i class="icon-building-2"></i>
+          </div>
+
+          <div>
+            <small>Setores Ativos</small>
+            <h2 id="totalSetores">0</h2>
+            <p>Áreas monitoradas</p>
+          </div>
+        </article>
+
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <i class="icon-list-todo"></i>
+          </div>
+
+          <div>
+            <small>Planos Pendentes</small>
+            <h2 id="planosPendentes">0</h2>
+            <p>Ações que exigem acompanhamento</p>
+          </div>
+        </article>
+
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <i class="icon-trophy"></i>
+          </div>
+
+          <div>
+            <small>Melhor Resultado</small>
+            <h2 id="melhorScore">0%</h2>
+            <p id="piorScoreTexto">Pior resultado: 0%</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="card chart-card chart-large">
+          <div class="card-heading">
+            <div>
+              <h3>Evolução das Auditorias</h3>
+              <p>Histórico do índice geral das auditorias finalizadas.</p>
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="graficoEvolucao"></canvas>
+          </div>
+        </article>
+
+        <article class="card chart-card">
+          <div class="card-heading">
+            <div>
+              <h3>Desempenho por Senso</h3>
+              <p>Média percentual dos cinco sensos.</p>
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="graficoSensos"></canvas>
+          </div>
+        </article>
+
+        <article class="card chart-card">
+          <div class="card-heading">
+            <div>
+              <h3>Radar 5S</h3>
+              <p>Visão comparativa dos sensos avaliados.</p>
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="graficoRadar"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid dashboard-bottom">
+        <article class="card ranking-card">
+          <div class="card-heading">
+            <div>
+              <h3>Ranking dos Setores</h3>
+              <p>Resultado mais recente de cada setor.</p>
+            </div>
+          </div>
+
+          <div id="rankingSetores" class="ranking-list">
+            <p class="empty-state">Nenhum setor encontrado.</p>
+          </div>
+        </article>
+
+        <article class="card planos-card">
+          <div class="card-heading">
+            <div>
+              <h3>Planos de Ação</h3>
+              <p>Distribuição dos planos por status.</p>
+            </div>
+          </div>
+
+          <div class="chart-container chart-small">
+            <canvas id="graficoPlanos"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <section class="card alert-card dashboard-alert">
+        <div>
+          <small>Diagnóstico Executivo</small>
+          <p id="diagnosticoTexto">
+            Cadastre e finalize auditorias para gerar um diagnóstico.
+          </p>
+
+          <strong id="diagnosticoStatus">
+            Aguardando dados
+          </strong>
+        </div>
+
+        <a class="btn-dark" href="./checklist.html">
+          Nova Auditoria
+        </a>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/components.js"></script>
+
+  <script>
+    renderSidebar("dashboard");
+
+    renderTopbar(
+      "Dashboard Executivo",
+      "Acompanhe os indicadores, resultados e a evolução da gestão 5S.",
+      "Nova Auditoria",
+      "./checklist.html"
+    );
+  </script>
+
+  <script src="../js/protegerPagina.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

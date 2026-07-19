@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Sensus | Checklist 5S</title>
+
+  <link rel="stylesheet" href="../css/styles.css">
+
+  <link
+    href="https://unpkg.com/lucide-static@latest/font/lucide.css"
+    rel="stylesheet"
+  >
+</head>
+
+<body>
+  <div class="app-layout">
+    <div id="sidebar"></div>
+
+    <main class="main-content">
+      <div id="topbar"></div>
+
+      <section
+        id="configuracaoAuditoria"
+        class="card checklist-configuracao"
+      >
+        <h2>Nova Auditoria 5S</h2>
+
+        <p class="texto-secundario">
+          Escolha o setor que será avaliado para iniciar o checklist.
+        </p>
+
+        <div class="campo-checklist">
+          <label for="setorId">
+            <strong>Setor avaliado</strong>
+          </label>
+
+          <select
+            id="setorId"
+            class="form-control"
+          >
+            <option value="">
+              Carregando setores...
+            </option>
+          </select>
+        </div>
+
+        <div class="campo-checklist">
+          <label for="observacaoGeral">
+            <strong>Observação geral</strong>
+          </label>
+
+          <textarea
+            id="observacaoGeral"
+            class="form-control"
+            rows="4"
+            placeholder="Exemplo: auditoria mensal do setor de estoque."
+          ></textarea>
+        </div>
+
+        <button
+          type="button"
+          class="btn-primary"
+          id="botaoIniciar"
+        >
+          Iniciar Auditoria
+        </button>
+      </section>
+
+      <section
+        id="areaAuditoria"
+        class="checklist-layout escondido"
+      >
+        <aside class="card checklist-etapas">
+          <h2>Etapas da Auditoria</h2>
+
+          <p class="texto-secundario">
+            Responda todos os critérios de cada senso.
+          </p>
+
+          <div
+            id="timelineSensos"
+            class="timeline"
+          ></div>
+
+          <div class="progresso-checklist">
+            <div class="progresso-info">
+              <span>Progresso</span>
+
+              <strong id="textoProgresso">
+                0 de 5 sensos
+              </strong>
+            </div>
+
+            <div class="barra-progresso">
+              <div
+                id="barraProgresso"
+                class="barra-progresso-preenchimento"
+              ></div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="card checklist-conteudo">
+          <header class="cabecalho-senso">
+            <div>
+              <span
+                id="sensoCodigo"
+                class="etiqueta-senso"
+              >
+                SEIRI
+              </span>
+
+              <h2 id="sensoNome">
+                Utilização
+              </h2>
+
+              <p
+                id="sensoDescricao"
+                class="texto-secundario"
+              >
+                Carregando informações do senso...
+              </p>
+            </div>
+
+            <span
+              id="etapaAtual"
+              class="indicador-etapa"
+            >
+              Etapa 1 de 5
+            </span>
+          </header>
+
+          <div
+            id="mensagemChecklist"
+            class="mensagem-checklist escondido"
+          ></div>
+
+          <form id="checklistForm">
+            <div id="listaCriterios"></div>
+
+            <div class="acoes-checklist">
+              <button
+                type="button"
+                class="btn-secondary"
+                id="botaoAnterior"
+              >
+                Senso anterior
+              </button>
+
+              <button
+                type="submit"
+                class="btn-primary"
+                id="botaoSalvar"
+              >
+                Salvar e próximo senso
+              </button>
+            </div>
+          </form>
+        </section>
+      </section>
+
+      <section
+        id="resultadoFinal"
+        class="card resultado-auditoria escondido"
+      >
+        <div class="icone-finalizacao">
+          <i class="icon-check-circle"></i>
+        </div>
+
+        <h2>Auditoria finalizada!</h2>
+
+        <p class="texto-secundario">
+          As respostas foram salvas e os resultados foram calculados.
+        </p>
+
+        <div class="resumo-final">
+          <div>
+            <span>Resultado geral</span>
+
+            <strong id="resultadoPercentual">
+              0%
+            </strong>
+          </div>
+
+          <div>
+            <span>Classificação</span>
+
+            <strong id="resultadoClassificacao">
+              -
+            </strong>
+          </div>
+        </div>
+
+        <div class="acoes-resultado">
+          <a
+            class="btn-primary"
+            href="./dashboard.html"
+          >
+            Ir para o Dashboard
+          </a>
+
+          <button
+            type="button"
+            class="btn-secondary"
+            id="botaoNovaAuditoria"
+          >
+            Nova Auditoria
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div
+    id="carregamento"
+    class="carregamento-checklist escondido"
+  >
+    <div class="spinner-checklist"></div>
+
+    <span>Processando...</span>
+  </div>
+
+  <script src="../js/components.js"></script>
+
+  <script>
+    renderSidebar("checklist");
+
+    renderTopbar(
+      "Checklist 5S",
+      "Realize a auditoria por critérios e acompanhe cada senso.",
+      "Ver Dashboard",
+      "./dashboard.html"
+    );
+  </script>
+
+  <script src="../js/checklist.js"></script>
+</body>
+</html>
