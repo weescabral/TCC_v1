@@ -1,4 +1,11 @@
+
 {
+  "name": "sensus-5s",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node backend/server.js"
+  },
   "dependencies": {
     "dotenv": "^17.4.2",
     "mysql2": "^3.23.2"
