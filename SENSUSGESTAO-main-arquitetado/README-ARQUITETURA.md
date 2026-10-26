@@ -27,22 +27,29 @@ frontend/
 ```bash
 cd backend
 npm install
-copy .env.example .env
+copy .env.example .env -> significa "Computador, pegue o arquivo .env.example (o molde), tire uma cópia exata dele e dê o nome de .env para essa nova cópia."
+Edite o `.env` e coloque sua senha do MySQL.
+
+
 npm run dev
 ```
 
-Edite o `.env` e coloque sua senha do MySQL.
+
 
 ## Testar banco
-
+Você digita http://localhost:3000/teste-banco no navegador e dá Enter.
+Se o banco responder, o Node te devolve uma mensagem na tela do navegador, algo como: "Conexão com o banco efetuada com sucesso!". Se der erro, ele vai te mostrar o erro na tela ou travar o terminal.
 ```txt
 http://localhost:3000/teste-banco
 ```
 
 ## Primeiro cadastro pelo Postman/Insomnia
+Para liberar o primeiro acesso ao sistema, realize uma requisição POST para o endpoint de registro:
 
-POST `http://localhost:3000/api/auth/registrar`
+POST URL `http://localhost:3000/api/auth/registrar`
 
+
+Body (JSON):
 ```json
 {
   "empresa": {
