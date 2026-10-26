@@ -1,5 +1,16 @@
+function getUsuarioLogado() {
+  try {
+    return JSON.parse(localStorage.getItem('sensus_usuario') || '{}');
+  } catch {
+    return {};
+  }
+}
+
 function renderSidebar(activePage = "") {
   const sidebar = document.getElementById("sidebar");
+  const usuario = getUsuarioLogado();
+  const nome = usuario.nome || 'Usuário';
+  const inicial = nome.charAt(0).toUpperCase();
 
   sidebar.innerHTML = `
     <aside class="sidebar">
@@ -13,12 +24,20 @@ function renderSidebar(activePage = "") {
           <i class="icon-home"></i> Visão Geral
         </a>
 
-        <a href="./checklist.html" class="${activePage === "checklist" ? "active" : ""}">
-          <i class="icon-clipboard-check"></i> Checklist 5S
+        <a href="./checklist.html" class="${activePage === "auditoria" || activePage === "checklist" ? "active" : ""}">
+          <i class="icon-clipboard-check"></i> Auditoria
         </a>
 
         <a href="./setores.html" class="${activePage === "setores" ? "active" : ""}">
           <i class="icon-building-2"></i> Setores
+        </a>
+
+        <a href="./planos-acao.html" class="${activePage === "planos" ? "active" : ""}">
+          <i class="icon-list-checks"></i> Planos de Ação
+        </a>
+
+        <a href="./historico-auditorias.html" class="${activePage === "historico" ? "active" : ""}">
+          <i class="icon-history"></i> Histórico de Auditorias
         </a>
 
         <a href="./sobre-gestao.html" class="${activePage === "guia" ? "active" : ""}">
@@ -26,10 +45,10 @@ function renderSidebar(activePage = "") {
         </a>
       </nav>
 
-      <div class="sidebar-user" onclick="logout()">
-        <div class="sidebar-avatar">B</div>
+      <div class="sidebar-user" onclick="logout()" title="Sair da conta">
+        <div class="sidebar-avatar">${inicial}</div>
         <div>
-          <strong>Brenda</strong>
+          <strong>${nome}</strong>
           <small>Sair da conta</small>
         </div>
       </div>
@@ -56,16 +75,14 @@ function renderTopbar(title, subtitle, buttonText = "", buttonLink = "") {
           <i class="icon-bell"></i>
         </button>
 
-        ${
-          buttonText
-            ? `<a href="${buttonLink}" class="btn-primary">${buttonText}</a>`
-            : ""
-        }
+        ${buttonText ? `<a href="${buttonLink}" class="btn-primary">${buttonText}</a>` : ""}
       </div>
     </header>
   `;
 }
 
 function logout() {
+  localStorage.removeItem('sensus_token');
+  localStorage.removeItem('sensus_usuario');
   window.location.href = "../index.html";
 }

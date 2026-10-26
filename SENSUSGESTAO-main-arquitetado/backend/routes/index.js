@@ -8,6 +8,8 @@ const sensoRoutes = require('./sensoRoutes');
 const criterioRoutes = require('./criterioRoutes');
 const auditoriaRoutes = require('./auditoriaRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
+const evidenciaRoutes = require('./evidenciaRoutes');
+const planoAcaoRoutes = require('./planoAcaoRoutes');
 
 const router = express.Router();
 
@@ -19,5 +21,7 @@ router.use('/sensos', sensoRoutes);
 router.use('/criterios', criterioRoutes);
 router.use('/auditorias', auditoriaRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/evidencias', evidenciaRoutes);
+router.use('/planos-acao', planoAcaoRoutes);
 
 module.exports = router;

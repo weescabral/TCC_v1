@@ -55,6 +55,7 @@ async function resumo(empresaId) {
         FROM auditorias
         WHERE empresa_id = ?
           AND status = 'finalizada'
+          AND YEAR(data_auditoria) = YEAR(CURDATE())
       ) AS mediaGeral
     `,
     [
@@ -171,12 +172,80 @@ async function resumo(empresaId) {
     [empresaId]
   );
 
+  const [cobertura] = await db.query(
+    `
+    SELECT
+      s.id,
+      s.nome,
+      s.periodicidade_auditoria,
+      s.auditor_id,
+      u.nome AS auditor_nome,
+      ultima.data_auditoria AS ultima_auditoria,
+      CASE
+        WHEN ultima.data_auditoria IS NULL THEN NULL
+        WHEN s.periodicidade_auditoria = 'semanal' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 1 WEEK)
+        WHEN s.periodicidade_auditoria = 'quinzenal' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 2 WEEK)
+        WHEN s.periodicidade_auditoria = 'mensal' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 1 MONTH)
+        WHEN s.periodicidade_auditoria = 'bimestral' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 2 MONTH)
+        WHEN s.periodicidade_auditoria = 'trimestral' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 3 MONTH)
+        WHEN s.periodicidade_auditoria = 'semestral' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 6 MONTH)
+        WHEN s.periodicidade_auditoria = 'anual' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 1 YEAR)
+        ELSE DATE_ADD(ultima.data_auditoria, INTERVAL 1 MONTH)
+      END AS proxima_auditoria
+    FROM setores s
+    LEFT JOIN usuarios u
+      ON u.id = s.auditor_id
+    LEFT JOIN (
+      SELECT a1.*
+      FROM auditorias a1
+      INNER JOIN (
+        SELECT setor_id, MAX(id) AS ultimo_id
+        FROM auditorias
+        WHERE empresa_id = ?
+          AND status = 'finalizada'
+        GROUP BY setor_id
+      ) ultimos
+        ON ultimos.ultimo_id = a1.id
+    ) ultima
+      ON ultima.setor_id = s.id
+    WHERE s.empresa_id = ?
+      AND s.ativo = TRUE
+    ORDER BY
+      CASE
+        WHEN ultima.data_auditoria IS NULL THEN 0
+        WHEN CASE
+          WHEN s.periodicidade_auditoria = 'semanal' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 1 WEEK)
+          WHEN s.periodicidade_auditoria = 'quinzenal' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 2 WEEK)
+          WHEN s.periodicidade_auditoria = 'mensal' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 1 MONTH)
+          WHEN s.periodicidade_auditoria = 'bimestral' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 2 MONTH)
+          WHEN s.periodicidade_auditoria = 'trimestral' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 3 MONTH)
+          WHEN s.periodicidade_auditoria = 'semestral' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 6 MONTH)
+          WHEN s.periodicidade_auditoria = 'anual' THEN DATE_ADD(ultima.data_auditoria, INTERVAL 1 YEAR)
+          ELSE DATE_ADD(ultima.data_auditoria, INTERVAL 1 MONTH)
+        END < NOW() THEN 0
+        ELSE 1
+      END,
+      s.nome
+    `,
+    [empresaId, empresaId]
+  );
+
+  const setoresAuditados = cobertura.filter((setor) => setor.ultima_auditoria).length;
+  const setoresPendentes = cobertura.filter((setor) => {
+    if (!setor.ultima_auditoria) return true;
+    return new Date(setor.proxima_auditoria) <= new Date();
+  });
+
+
   return {
     kpis,
     porSetor,
     porSenso,
     planos,
     evolucao,
+    cobertura,
+    setoresAuditados,
+    setoresPendentes,
   };
 }
 

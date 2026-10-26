@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensus | Planos de Ação</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="sidebar"></div>
+    <main class="main-content">
+      <div id="topbar"></div>
+      <section class="card" style="margin-bottom:20px;">
+        <div class="card-heading">
+          <div>
+            <h3>Acompanhamento das ações</h3>
+            <p>Registre a correção, acompanhe a execução e marque a manutenção como concluída.</p>
+          </div>
+          <select id="filtroStatus" class="form-control" style="max-width:220px;">
+            <option value="">Todos os status</option>
+            <option value="pendente">Pendente</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+      </section>
+      <section id="listaPlanos" class="sector-grid">
+        <div class="card"><p>Carregando planos de ação...</p></div>
+      </section>
+    </main>
+  </div>
+  <script src="../js/components.js"></script>
+  <script>
+    renderSidebar("planos");
+    renderTopbar("Planos de Ação", "Registre correções e acompanhe a manutenção das não conformidades.");
+  </script>
+  <script src="../js/protegerPagina.js"></script>
+  <script src="../js/planos-acao.js"></script>
+</body>
+</html>

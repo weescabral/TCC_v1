@@ -7,14 +7,18 @@ async function listar(empresaId) {
         SELECT
             a.*,
             s.nome AS setor_nome,
+            s.descricao AS setor_descricao,
+            s.auditor_id AS setor_auditor_id,
             u.nome AS auditor_nome
         FROM auditorias a
-        INNER JOIN setores s
+        LEFT JOIN setores s
             ON s.id = a.setor_id
-        INNER JOIN usuarios u
+           AND s.empresa_id = a.empresa_id
+        LEFT JOIN usuarios u
             ON u.id = a.usuario_id
+           AND u.empresa_id = a.empresa_id
         WHERE a.empresa_id = ?
-        ORDER BY a.data_auditoria DESC
+        ORDER BY COALESCE(a.data_auditoria, a.iniciada_em, a.finalizada_em) DESC, a.id DESC
         `,
         [empresaId]
     );
@@ -28,12 +32,16 @@ async function buscarPorId(id, empresaId) {
         SELECT
             a.*,
             s.nome AS setor_nome,
+            s.descricao AS setor_descricao,
+            s.auditor_id AS setor_auditor_id,
             u.nome AS auditor_nome
         FROM auditorias a
-        INNER JOIN setores s
+        LEFT JOIN setores s
             ON s.id = a.setor_id
-        INNER JOIN usuarios u
+           AND s.empresa_id = a.empresa_id
+        LEFT JOIN usuarios u
             ON u.id = a.usuario_id
+           AND u.empresa_id = a.empresa_id
         WHERE a.id = ?
           AND a.empresa_id = ?
         LIMIT 1
@@ -119,8 +127,61 @@ async function buscarPorId(id, empresaId) {
         [id]
     );
 
+    const [evidencias] = await db.query(
+        `
+        SELECT
+            e.id,
+            e.auditoria_id,
+            e.resposta_id,
+            e.criado_por,
+            e.nome_original,
+            e.nome_arquivo,
+            e.caminho,
+            e.mime_type,
+            e.tamanho_bytes,
+            e.descricao,
+            e.criado_em
+        FROM evidencias_auditoria e
+        WHERE e.auditoria_id = ?
+        ORDER BY e.criado_em ASC, e.id ASC
+        `,
+        [id]
+    );
+
+    const [planosAcao] = await db.query(
+        `
+        SELECT
+            pa.*,
+            c.titulo AS criterio_titulo,
+            u.nome AS responsavel_nome
+        FROM planos_acao pa
+        LEFT JOIN criterios_5s c
+            ON c.id = pa.criterio_id
+        LEFT JOIN usuarios u
+            ON u.id = pa.responsavel_id
+        WHERE pa.auditoria_id = ?
+        ORDER BY pa.id DESC
+        `,
+        [id]
+    );
+
+    const evidenciasPorResposta = new Map();
+    for (const evidencia of evidencias) {
+        const chave = Number(evidencia.resposta_id || 0);
+        if (!evidenciasPorResposta.has(chave)) {
+            evidenciasPorResposta.set(chave, []);
+        }
+        evidenciasPorResposta.get(chave).push(evidencia);
+    }
+
+    for (const resposta of respostas) {
+        resposta.evidencias = evidenciasPorResposta.get(Number(resposta.id)) || [];
+    }
+
     auditoria.respostas = respostas;
     auditoria.resultados_sensos = resultadosSensos;
+    auditoria.evidencias = evidencias;
+    auditoria.planos_acao = planosAcao;
 
     return auditoria;
 }
@@ -129,71 +190,151 @@ async function criar({
     empresa_id,
     setor_id,
     usuario_id,
-    observacao_geral
+    observacao_geral,
+    tipo = 'periodica',
+    motivo_extraordinaria = null,
+    prazo = null,
+    notificar_em = null,
+    data_auditoria = null
 }) {
     const connection = await db.getConnection();
 
     try {
         await connection.beginTransaction();
 
+        const [setores] = await connection.query(
+            `SELECT id, nome, descricao, auditor_id, periodicidade_auditoria, ativo
+             FROM setores
+             WHERE id = ? AND empresa_id = ?
+             LIMIT 1`,
+            [setor_id, empresa_id]
+        );
+
+        const setor = setores[0];
+
+        if (!setor) {
+            const error = new Error('Setor não encontrado.');
+            error.status = 404;
+            throw error;
+        }
+
+        if (!setor.ativo) {
+            const error = new Error('Não é possível iniciar auditoria em um setor inativo.');
+            error.status = 409;
+            throw error;
+        }
+
+        if (!setor.auditor_id) {
+            const error = new Error('Este setor não possui auditor responsável. Cadastre um auditor antes de iniciar a auditoria.');
+            error.status = 409;
+            throw error;
+        }
+
+        const [auditores] = await connection.query(
+            `SELECT id, nome, ativo, perfil
+             FROM usuarios
+             WHERE id = ? AND empresa_id = ?
+             LIMIT 1`,
+            [setor.auditor_id, empresa_id]
+        );
+
+        const auditor = auditores[0];
+
+        if (!auditor || !auditor.ativo || !['auditor', 'administrador'].includes(auditor.perfil)) {
+            const error = new Error('O auditor responsável pelo setor está inativo ou não possui perfil válido.');
+            error.status = 409;
+            throw error;
+        }
+
+        if (usuario_id && Number(usuario_id) !== Number(setor.auditor_id)) {
+            const [usuarioLogado] = await connection.query(
+                `SELECT id, perfil FROM usuarios WHERE id = ? AND empresa_id = ? LIMIT 1`,
+                [usuario_id, empresa_id]
+            );
+
+            if (usuarioLogado[0]?.perfil !== 'administrador') {
+                const error = new Error('Você só pode realizar auditorias dos setores sob sua responsabilidade.');
+                error.status = 403;
+                throw error;
+            }
+        }
+
+        if (!['periodica', 'extraordinaria'].includes(tipo)) {
+            const error = new Error('Tipo de auditoria inválido.');
+            error.status = 400;
+            throw error;
+        }
+
+        if (tipo === 'extraordinaria' && !String(motivo_extraordinaria || '').trim()) {
+            const error = new Error('Informe o motivo da auditoria extraordinária.');
+            error.status = 400;
+            throw error;
+        }
+
+        if (!prazo) {
+            const error = new Error('Informe o prazo da auditoria.');
+            error.status = 400;
+            throw error;
+        }
+
+        if (notificar_em && new Date(notificar_em) > new Date(prazo)) {
+            const error = new Error('A data de notificação não pode ser posterior ao prazo da auditoria.');
+            error.status = 400;
+            throw error;
+        }
+
         const codigo = `AUD-${Date.now()}`;
 
         const [result] = await connection.query(
-            `
-            INSERT INTO auditorias
+            `INSERT INTO auditorias
             (
                 codigo,
                 empresa_id,
                 setor_id,
                 usuario_id,
+                data_auditoria,
                 observacao_geral,
-                status
+                status,
+                tipo,
+                motivo_extraordinaria,
+                prazo,
+                notificar_em,
+                iniciada_em
             )
-            VALUES (?, ?, ?, ?, ?, 'rascunho')
-            `,
+            VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, NOW())`,
             [
                 codigo,
                 empresa_id,
                 setor_id,
-                usuario_id,
-                observacao_geral || null
+                setor.auditor_id,
+                data_auditoria || new Date(),
+                observacao_geral || null,
+                tipo,
+                tipo === 'extraordinaria' ? motivo_extraordinaria.trim() : null,
+                prazo,
+                notificar_em || null
             ]
         );
 
         const auditoriaId = result.insertId;
 
         const [sensos] = await connection.query(
-            `
-            SELECT id
-            FROM sensos_5s
-            ORDER BY ordem
-            `
+            `SELECT id FROM sensos_5s ORDER BY ordem`
         );
 
         if (sensos.length !== 5) {
             const error = new Error(
                 'Os cinco sensos 5S precisam estar cadastrados antes de criar uma auditoria.'
             );
-
             error.status = 400;
             throw error;
         }
 
         for (const senso of sensos) {
             await connection.query(
-                `
-                INSERT INTO resultados_sensos
-                (
-                    auditoria_id,
-                    senso_id,
-                    pontuacao_total,
-                    pontuacao_maxima,
-                    percentual,
-                    classificacao,
-                    status
-                )
-                VALUES (?, ?, 0, 0, 0, NULL, 'pendente')
-                `,
+                `INSERT INTO resultados_sensos
+                (auditoria_id, senso_id, pontuacao_total, pontuacao_maxima, percentual, classificacao, status)
+                VALUES (?, ?, 0, 0, 0, NULL, 'pendente')`,
                 [auditoriaId, senso.id]
             );
         }
@@ -277,10 +418,26 @@ async function salvarResposta({
         ]
     );
 
-    return recalcularResultadoSenso(
+    const [[resposta]] = await db.query(
+        `
+        SELECT id
+        FROM respostas_auditoria
+        WHERE auditoria_id = ?
+          AND criterio_id = ?
+        LIMIT 1
+        `,
+        [auditoria_id, criterio_id]
+    );
+
+    const totais = await recalcularResultadoSenso(
         auditoria_id,
         criterio.senso_id
     );
+
+    return {
+        resposta_id: resposta?.id || null,
+        ...totais
+    };
 }
 
 async function recalcularResultadoSenso(auditoriaId, sensoId) {
@@ -516,11 +673,19 @@ async function finalizar(id, empresaId) {
     await db.query(
         `
         UPDATE auditorias
-        SET status = 'finalizada'
+        SET
+            status = 'finalizada',
+            finalizada_em = NOW(),
+            duracao_segundos = TIMESTAMPDIFF(SECOND, COALESCE(iniciada_em, data_auditoria), NOW())
         WHERE id = ?
           AND empresa_id = ?
         `,
         [id, empresaId]
+    );
+
+    const [[dadosTempo]] = await db.query(
+        `SELECT duracao_segundos, finalizada_em FROM auditorias WHERE id = ? LIMIT 1`,
+        [id]
     );
 
     const [respostasCriticas] = await db.query(
@@ -569,6 +734,8 @@ async function finalizar(id, empresaId) {
 
     return {
         ...totais,
+        duracao_segundos: Number(dadosTempo?.duracao_segundos || 0),
+        finalizada_em: dadosTempo?.finalizada_em || new Date(),
         status: 'finalizada'
     };
 }

@@ -44,3 +44,13 @@ Authorization: Bearer SEU_TOKEN
 - `POST /api/auditorias/:id/respostas`
 - `POST /api/auditorias/:id/finalizar`
 - `GET /api/dashboard/resumo`
+
+## Migrações
+
+As alterações estruturais do sistema ficam em `backend/database/migrations/`.
+
+Para a primeira fase das melhorias, execute no MySQL/Railway:
+
+`001_melhorias_setores_auditores.sql`
+
+Ela adiciona código do setor, responsável pelo cadastro, auditor responsável, periodicidade, histórico de inativação, dados de prazo/execução da auditoria e a tabela de evidências.

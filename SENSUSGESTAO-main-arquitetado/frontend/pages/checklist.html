@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Sensus | Checklist 5S</title>
+  <title>Sensus | Auditoria 5S</title>
 
   <link rel="stylesheet" href="../css/styles.css">
 
@@ -44,6 +44,55 @@
               Carregando setores...
             </option>
           </select>
+        </div>
+
+        <div id="informacoesSetor" class="card" style="background:#f8fafc; margin:18px 0;">
+          <strong id="setorDescricaoTitulo">Selecione um setor</strong>
+          <p id="setorDescricaoAuditoria" class="texto-secundario" style="margin-top:6px;">A descrição do setor e o auditor responsável aparecerão aqui.</p>
+        </div>
+
+        <div class="campo-checklist">
+          <label for="tipoAuditoria">
+            <strong>Tipo de auditoria</strong>
+          </label>
+          <select id="tipoAuditoria" class="form-control">
+            <option value="periodica" selected>Periódica</option>
+            <option value="extraordinaria">Extraordinária</option>
+          </select>
+        </div>
+
+        <div id="campoMotivoExtraordinaria" class="campo-checklist escondido">
+          <label for="motivoExtraordinaria">
+            <strong>Motivo da auditoria extraordinária</strong>
+          </label>
+          <textarea
+            id="motivoExtraordinaria"
+            class="form-control"
+            rows="3"
+            placeholder="Informe por que esta auditoria extraordinária está sendo realizada..."
+          ></textarea>
+        </div>
+
+        <div class="campo-checklist">
+          <label for="dataAuditoria">
+            <strong>Data da auditoria</strong>
+          </label>
+          <input id="dataAuditoria" type="datetime-local" class="form-control" required>
+        </div>
+
+        <div class="campo-checklist">
+          <label for="prazoAuditoria">
+            <strong>Prazo da auditoria</strong>
+          </label>
+          <input id="prazoAuditoria" type="datetime-local" class="form-control" required>
+        </div>
+
+        <div class="campo-checklist">
+          <label for="notificarAuditoria">
+            <strong>Notificar em</strong>
+          </label>
+          <input id="notificarAuditoria" type="datetime-local" class="form-control">
+          <small class="texto-secundario">Opcional. Use para programar o aviso de proximidade do prazo.</small>
         </div>
 
         <div class="campo-checklist">
@@ -103,6 +152,12 @@
         </aside>
 
         <section class="card checklist-conteudo">
+          <div class="card" style="background:#f8fafc; margin-bottom:18px;">
+            <strong id="auditoriaSetorTitulo">Setor</strong>
+            <p id="auditoriaSetorDescricao" class="texto-secundario" style="margin-top:6px;"></p>
+            <small id="auditoriaSetorAuditor" class="texto-secundario"></small>
+          </div>
+
           <header class="cabecalho-senso">
             <div>
               <span
@@ -137,7 +192,7 @@
             class="mensagem-checklist escondido"
           ></div>
 
-          <form id="checklistForm">
+          <form id="checklistForm" onsubmit="return false;">
             <div id="listaCriterios"></div>
 
             <div class="acoes-checklist">
@@ -150,7 +205,7 @@
               </button>
 
               <button
-                type="submit"
+                type="button"
                 class="btn-primary"
                 id="botaoSalvar"
               >
@@ -171,9 +226,28 @@
 
         <h2>Auditoria finalizada!</h2>
 
+        <div class="status-finalizacao">
+          <i class="icon-check-circle"></i> AUDITORIA CONCLUÍDA
+        </div>
+
         <p class="texto-secundario">
-          As respostas foram salvas e os resultados foram calculados.
+          A auditoria foi concluída com sucesso. Todas as respostas e evidências enviadas foram registradas e o resultado abaixo já está disponível.
         </p>
+
+        <div class="identificacao-final">
+          <div>
+            <span>Código da auditoria</span>
+            <strong id="resultadoCodigo">-</strong>
+          </div>
+          <div>
+            <span>Setor avaliado</span>
+            <strong id="resultadoSetor">-</strong>
+          </div>
+          <div>
+            <span>Concluída em</span>
+            <strong id="resultadoData">-</strong>
+          </div>
+        </div>
 
         <div class="resumo-final">
           <div>
@@ -190,6 +264,11 @@
             <strong id="resultadoClassificacao">
               -
             </strong>
+          </div>
+
+          <div>
+            <span>Tempo de execução</span>
+            <strong id="resultadoDuracao">-</strong>
           </div>
         </div>
 
@@ -225,10 +304,10 @@
   <script src="../js/components.js"></script>
 
   <script>
-    renderSidebar("checklist");
+    renderSidebar("auditoria");
 
     renderTopbar(
-      "Checklist 5S",
+      "Auditoria 5S",
       "Realize a auditoria por critérios e acompanhe cada senso.",
       "Ver Dashboard",
       "./dashboard.html"

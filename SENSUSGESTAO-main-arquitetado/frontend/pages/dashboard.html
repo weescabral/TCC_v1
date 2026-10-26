@@ -41,9 +41,9 @@
           </div>
 
           <div>
-            <small>Média Geral</small>
+            <small>Média Geral Anual</small>
             <h2 id="mediaGeral">0%</h2>
-            <p>Média das auditorias finalizadas</p>
+            <p>Média das auditorias finalizadas no ano</p>
           </div>
         </article>
 
@@ -65,9 +65,9 @@
           </div>
 
           <div>
-            <small>Setores Ativos</small>
-            <h2 id="totalSetores">0</h2>
-            <p>Áreas monitoradas</p>
+            <small>Cobertura das Auditorias</small>
+            <h2 id="coberturaSetores">0/0</h2>
+            <p>Setores auditados</p>
           </div>
         </article>
 
@@ -137,6 +137,18 @@
         </article>
       </section>
 
+      <section class="card" style="margin-bottom:24px;">
+        <div class="card-heading">
+          <div>
+            <h3>Setores pendentes de auditoria</h3>
+            <p>Setores sem auditoria registrada ou com a periodicidade vencida.</p>
+          </div>
+        </div>
+        <div id="setoresPendentes" class="ranking-list">
+          <p class="empty-state">Nenhum setor pendente.</p>
+        </div>
+      </section>
+
       <section class="dashboard-grid dashboard-bottom">
         <article class="card ranking-card">
           <div class="card-heading">
@@ -157,6 +169,7 @@
               <h3>Planos de Ação</h3>
               <p>Distribuição dos planos por status.</p>
             </div>
+            <a class="btn-outline" href="./planos-acao.html">Gerenciar planos</a>
           </div>
 
           <div class="chart-container chart-small">

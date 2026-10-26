@@ -18,10 +18,11 @@
 
       <section class="page-grid">
         <div class="card" id="cadastroSetor">
-          <h2>Cadastrar Setor</h2>
+          <h2 id="tituloFormularioSetor">Cadastrar Setor</h2>
           <p style="color:#64748b; margin: 8px 0 22px;">
-            Informe o ambiente que será avaliado no checklist.
+            Informe o ambiente que será avaliado nas auditorias 5S.
           </p>
+          <input type="hidden" id="sectorId">
 
           <form id="sectorForm">
             <label for="sectorName"><strong>Nome do Setor</strong></label>
@@ -33,6 +34,22 @@
               required
             >
 
+            <label for="sectorAuditor"><strong>Auditor responsável</strong></label>
+            <select id="sectorAuditor" class="form-control" required>
+              <option value="">Carregando auditores...</option>
+            </select>
+
+            <label for="sectorPeriodicity"><strong>Periodicidade das auditorias</strong></label>
+            <select id="sectorPeriodicity" class="form-control" required>
+              <option value="semanal">Semanal</option>
+              <option value="quinzenal">Quinzenal</option>
+              <option value="mensal" selected>Mensal</option>
+              <option value="bimestral">Bimestral</option>
+              <option value="trimestral">Trimestral</option>
+              <option value="semestral">Semestral</option>
+              <option value="anual">Anual</option>
+            </select>
+
             <label for="sectorDesc"><strong>Descrição</strong></label>
             <textarea 
               id="sectorDesc" 
@@ -42,9 +59,14 @@
               required
             ></textarea>
 
-            <button type="submit" class="btn-primary" style="width: 100%;">
-              Salvar Setor
-            </button>
+            <div style="display:flex; gap:10px;">
+              <button type="submit" class="btn-primary" id="botaoSalvarSetor" style="flex:1;">
+                Salvar Setor
+              </button>
+              <button type="button" class="btn-outline" id="botaoCancelarEdicao" style="display:none;">
+                Cancelar
+              </button>
+            </div>
           </form>
         </div>
 

@@ -92,7 +92,9 @@ async function carregarDashboard() {
       );
     }
 
+    window.dashboardSetoresAuditados = Number(dados.setoresAuditados || 0);
     preencherKPIs(dados.kpis);
+    renderizarSetoresPendentes(dados.setoresPendentes || []);
     renderizarEvolucao(dados.evolucao);
     renderizarSensos(dados.porSenso);
     renderizarRadar(dados.porSenso);
@@ -125,8 +127,10 @@ function preencherKPIs(kpis = {}) {
   document.getElementById('totalAuditorias').textContent =
     Number(kpis.totalAuditorias || 0);
 
-  document.getElementById('totalSetores').textContent =
-    Number(kpis.totalSetores || 0);
+  const totalSetores = Number(kpis.totalSetores || 0);
+  const setoresAuditados = Number(window.dashboardSetoresAuditados || 0);
+  document.getElementById('coberturaSetores').textContent =
+    `${setoresAuditados}/${totalSetores}`;
 
   document.getElementById('planosPendentes').textContent =
     Number(kpis.planosPendentes || 0);
@@ -358,6 +362,33 @@ function renderizarPlanos(planos = []) {
       },
     },
   });
+}
+
+function renderizarSetoresPendentes(setores = []) {
+  const container = document.getElementById('setoresPendentes');
+
+  if (!setores.length) {
+    container.innerHTML = '<p class="empty-state">Nenhum setor pendente de auditoria.</p>';
+    return;
+  }
+
+  container.innerHTML = setores.map((setor) => {
+    const data = setor.proxima_auditoria
+      ? formatarData(setor.proxima_auditoria)
+      : 'Nunca auditado';
+
+    return `
+      <div class="ranking-item">
+        <div class="ranking-content">
+          <div class="ranking-header">
+            <strong>${setor.nome}</strong>
+            <span>${data}</span>
+          </div>
+          <small>Auditor: ${setor.auditor_nome || 'Não definido'} • Periodicidade: ${setor.periodicidade_auditoria || 'mensal'}</small>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function preencherDiagnostico(dados) {
