@@ -132,8 +132,12 @@ function limparEstadoAuditoria() {
   sessionStorage.removeItem(STORAGE_KEY);
 }
 
+
 function salvarEstadoAuditoria() {
   if (!estado.auditoriaId || estado.auditoriaFinalizada) return;
+
+  // Captura as notas e observações que estão na tela agora.
+  salvarRespostasLocaisSemValidar();
 
   const snapshot = {
     auditoriaId: estado.auditoriaId,
@@ -206,10 +210,9 @@ async function restaurarAuditoriaEmAndamento() {
     mostrarMensagem('Auditoria em andamento restaurada. Você pode continuar de onde parou.', 'sucesso');
     return true;
   } catch (erro) {
-    console.warn('Não foi possível restaurar a auditoria em andamento:', erro);
-    limparEstadoAuditoria();
-    return false;
-  }
+  console.warn('Não foi possível restaurar a auditoria em andamento:', erro);
+  return false;
+}
 }
 
 function configurarAvisoSaidaDuranteAuditoria() {

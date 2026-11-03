@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensus | Guia 5S</title>
+
+  <link rel="stylesheet" href="../css/styles.css">
+  <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="app-layout">
+    <div id="sidebar"></div>
+
+    <main class="main-content">
+      <div id="topbar"></div>
+
+      <section class="stats-grid">
+        <div class="card stat-card">
+          <div class="stat-icon"><i class="icon-sparkles"></i></div>
+          <div>
+            <small>Objetivo</small>
+            <h2>Organização</h2>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-icon"><i class="icon-trending-up"></i></div>
+          <div>
+            <small>Resultado</small>
+            <h2>Eficiência</h2>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-icon"><i class="icon-repeat"></i></div>
+          <div>
+            <small>Base</small>
+            <h2>Melhoria</h2>
+          </div>
+        </div>
+      </section>
+
+      <section class="card chart-card">
+        <h2>O que é o 5S?</h2>
+        <p style="margin-top:10px; line-height:1.8;">
+          A metodologia 5S é uma ferramenta de gestão voltada para organização,
+          limpeza, padronização e disciplina no ambiente de trabalho. No Sensus,
+          ela é aplicada por meio de checklists, pontuações e acompanhamento dos
+          setores da empresa.
+        </p>
+      </section>
+
+      <section class="sector-grid">
+        <div class="card sector-card">
+          <h3><i class="icon-filter"></i> Seiri — Utilização</h3>
+          <p>Separar o necessário do desnecessário, eliminando excessos e mantendo apenas o que realmente agrega valor ao ambiente.</p>
+        </div>
+
+        <div class="card sector-card">
+          <h3><i class="icon-layout-grid"></i> Seiton — Organização</h3>
+          <p>Definir locais adequados para cada item, facilitando o acesso, reduzindo perdas de tempo e melhorando o fluxo de trabalho.</p>
+        </div>
+
+        <div class="card sector-card">
+          <h3><i class="icon-spray-can"></i> Seiso — Limpeza</h3>
+          <p>Manter o ambiente limpo, seguro e adequado para as atividades, identificando problemas antes que se agravem.</p>
+        </div>
+
+        <div class="card sector-card">
+          <h3><i class="icon-clipboard-list"></i> Seiketsu — Padronização</h3>
+          <p>Criar padrões visuais, rotinas e procedimentos que garantam a continuidade dos três primeiros sensos.</p>
+        </div>
+
+        <div class="card sector-card">
+          <h3><i class="icon-shield-check"></i> Shitsuke — Disciplina</h3>
+          <p>Estimular a manutenção dos hábitos, o comprometimento da equipe e a melhoria contínua dos processos.</p>
+        </div>
+
+        <div class="card sector-card">
+          <h3><i class="icon-bar-chart-3"></i> Auditoria 5S</h3>
+          <p>No Sensus, cada senso recebe uma pontuação de 0 a 100. A média final gera o índice geral do setor avaliado.</p>
+        </div>
+      </section>
+
+      <p class="footer-text">
+        © 2026 Sensus 5S • Brenda, Wesllys e Saranna • TCC ADS UEMA
+      </p>
+    </main>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script>
+    renderSidebar("guia");
+    renderTopbar(
+      "Guia da Metodologia 5S",
+      "Entenda os cinco sensos usados nas auditorias do Sensus.",
+      "Iniciar Auditoria",
+      "./checklist.html"
+    );
+  </script>
+</body>
+</html>
