@@ -1,7 +1,9 @@
 const db = require('../config/database');
 const { classificarPercentual } = require('../utils/classificacao');
 
-async function listar(empresaId) {
+async function listar(empresaId, usuario = null) {
+    const filtroAuditor = usuario?.perfil === 'auditor' ? 'AND s.auditor_id = ?' : '';
+    const parametros = usuario?.perfil === 'auditor' ? [empresaId, usuario.id] : [empresaId];
     const [rows] = await db.query(
         `
         SELECT
@@ -11,16 +13,15 @@ async function listar(empresaId) {
             s.auditor_id AS setor_auditor_id,
             u.nome AS auditor_nome
         FROM auditorias a
-        LEFT JOIN setores s
+        INNER JOIN setores s
             ON s.id = a.setor_id
-           AND s.empresa_id = a.empresa_id
-        LEFT JOIN usuarios u
+        INNER JOIN usuarios u
             ON u.id = a.usuario_id
-           AND u.empresa_id = a.empresa_id
         WHERE a.empresa_id = ?
-        ORDER BY COALESCE(a.data_auditoria, a.iniciada_em, a.finalizada_em) DESC, a.id DESC
+          ${filtroAuditor}
+        ORDER BY a.data_auditoria DESC
         `,
-        [empresaId]
+        parametros
     );
 
     return rows;
@@ -36,12 +37,10 @@ async function buscarPorId(id, empresaId) {
             s.auditor_id AS setor_auditor_id,
             u.nome AS auditor_nome
         FROM auditorias a
-        LEFT JOIN setores s
+        INNER JOIN setores s
             ON s.id = a.setor_id
-           AND s.empresa_id = a.empresa_id
-        LEFT JOIN usuarios u
+        INNER JOIN usuarios u
             ON u.id = a.usuario_id
-           AND u.empresa_id = a.empresa_id
         WHERE a.id = ?
           AND a.empresa_id = ?
         LIMIT 1

@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(autenticar);
 
 router.get('/', asyncHandler(PlanoAcaoController.listar));
+router.get('/resumo', asyncHandler(PlanoAcaoController.obterResumo));
 router.patch('/:id', asyncHandler(PlanoAcaoController.atualizar));
 
 module.exports = router;

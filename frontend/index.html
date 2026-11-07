@@ -96,7 +96,7 @@
         </div>
       </div>
 
-      <form class="login-card" onsubmit="event.preventDefault(); efetuarLogin();">
+      <form class="login-card" id="loginCard">
         <label for="userInput">E-mail ou Usuário</label>
         <div class="input-box">
           <i class="icon-mail"></i>
@@ -122,11 +122,8 @@
         </div>
 
         <div class="options">
-          <label class="remember">
-            <input type="checkbox" />
-            Lembrar de mim
-          </label>
-          <a href="#">Esqueceu a senha?</a>
+          <label class="remember"><input id="rememberMe" type="checkbox" /> Lembrar de mim</label>
+          <a href="#" id="forgotLink">Esqueceu a senha?</a>
         </div>
 
         <button type="submit" class="btn-login">
@@ -134,17 +131,34 @@
           <i class="icon-arrow-right"></i>
         </button>
 
-        <div class="divider">
-          <span></span>
-          <p>ou continue com</p>
-          <span></span>
-        </div>
-
-        <button type="button" class="btn-google">
-          <strong>G</strong>
-          Continuar com Google
-        </button>
+        <p class="switch-auth">Ainda não tem uma conta? <a href="#" id="showRegister">Cadastre sua empresa</a></p>
       </form>
+
+      <form class="login-card auth-extra" id="registerCard" hidden>
+        <h2>Criar sua conta</h2><p>Cadastre sua empresa e crie o primeiro acesso de administrador.</p>
+        <label for="companyName">Nome da empresa</label><div class="input-box"><i class="icon-building-2"></i><input id="companyName" required maxlength="150" autocomplete="organization" placeholder="Sua empresa" /></div>
+        <label for="registerName">Seu nome</label><div class="input-box"><i class="icon-user"></i><input id="registerName" required maxlength="100" autocomplete="name" placeholder="Nome do responsável" /></div>
+        <label for="registerEmail">E-mail</label><div class="input-box"><i class="icon-mail"></i><input id="registerEmail" type="email" required autocomplete="email" placeholder="nome@empresa.com" /></div>
+        <label for="registerPassword">Senha (mínimo 8 caracteres)</label><div class="input-box"><i class="icon-lock"></i><input id="registerPassword" type="password" minlength="8" required autocomplete="new-password" /></div>
+        <label for="registerConfirm">Confirmar senha</label><div class="input-box"><i class="icon-lock"></i><input id="registerConfirm" type="password" minlength="8" required autocomplete="new-password" /></div>
+        <button type="submit" class="btn-login">Criar conta <i class="icon-arrow-right"></i></button>
+        <p class="switch-auth">Já possui uma conta? <a href="#" id="showLogin">Voltar ao login</a></p>
+      </form>
+
+      <form class="login-card auth-extra" id="forgotCard" hidden>
+        <h2>Recuperar senha</h2><p>Informe o e-mail associado à sua conta. Enviaremos um link para criar uma nova senha.</p>
+        <label for="forgotEmail">E-mail</label><div class="input-box"><i class="icon-mail"></i><input id="forgotEmail" type="email" required autocomplete="email" placeholder="nome@empresa.com" /></div>
+        <button type="submit" class="btn-login">Enviar instruções</button>
+        <p class="switch-auth"><a href="#" id="backFromForgot">Voltar ao login</a></p>
+      </form>
+
+      <form class="login-card auth-extra" id="resetCard" hidden>
+        <h2>Definir nova senha</h2><p>Escolha uma senha nova com pelo menos 8 caracteres.</p>
+        <label for="resetPassword">Nova senha</label><div class="input-box"><i class="icon-lock"></i><input id="resetPassword" type="password" minlength="8" required autocomplete="new-password" /></div>
+        <label for="resetConfirm">Confirmar nova senha</label><div class="input-box"><i class="icon-lock"></i><input id="resetConfirm" type="password" minlength="8" required autocomplete="new-password" /></div>
+        <button type="submit" class="btn-login">Salvar nova senha</button>
+      </form>
+      <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
     </section>
   </main>
 

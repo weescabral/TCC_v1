@@ -5,6 +5,9 @@ async function criarEmpresaComAdmin({ empresa, usuario }) {
   try {
     await connection.beginTransaction();
 
+    const [existente] = await connection.query('SELECT id FROM usuarios WHERE email = ? LIMIT 1', [usuario.email]);
+    if (existente.length) { const erro = new Error('Este e-mail já está cadastrado.'); erro.status = 409; throw erro; }
+
     const [empresaResult] = await connection.query(
       `INSERT INTO empresas (nome, cnpj, telefone, email, endereco)
        VALUES (?, ?, ?, ?, ?)`,
@@ -16,7 +19,7 @@ async function criarEmpresaComAdmin({ empresa, usuario }) {
     const [usuarioResult] = await connection.query(
       `INSERT INTO usuarios (empresa_id, nome, email, senha, perfil)
        VALUES (?, ?, ?, ?, ?)`,
-      [empresaId, usuario.nome, usuario.email, usuario.senhaHash, usuario.perfil || 'administrador']
+      [empresaId, usuario.nome, usuario.email, usuario.senhaHash, 'administrador']
     );
 
     await connection.commit();
@@ -52,4 +55,38 @@ async function buscarUsuarioSeguro(id) {
   return rows[0];
 }
 
-module.exports = { criarEmpresaComAdmin, buscarPorEmail, buscarUsuarioSeguro };
+async function criarTokenRecuperacao({ usuarioId, tokenHash, expiraEm }) {
+  await db.query('INSERT INTO recuperacao_senha (usuario_id, token_hash, expira_em) VALUES (?, ?, ?)', [usuarioId, tokenHash, expiraEm]);
+}
+
+async function buscarUsuarioPorToken(tokenHash) {
+  const [rows] = await db.query(
+    `SELECT r.id AS recuperacao_id, r.usuario_id, u.ativo FROM recuperacao_senha r
+     INNER JOIN usuarios u ON u.id = r.usuario_id
+     WHERE r.token_hash = ? AND r.usado_em IS NULL AND r.expira_em > NOW() LIMIT 1`, [tokenHash]
+  );
+  return rows[0];
+}
+
+async function concluirRecuperacao(recuperacaoId, usuarioId, senhaHash) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [rows] = await connection.query(
+      'SELECT id FROM recuperacao_senha WHERE id = ? AND usuario_id = ? AND usado_em IS NULL AND expira_em > NOW() FOR UPDATE',
+      [recuperacaoId, usuarioId]
+    );
+    if (!rows.length) { const erro = new Error('Este link expirou ou já foi utilizado. Solicite uma nova recuperação.'); erro.status = 400; throw erro; }
+    await connection.query('UPDATE usuarios SET senha = ? WHERE id = ?', [senhaHash, usuarioId]);
+    await connection.query('UPDATE recuperacao_senha SET usado_em = NOW() WHERE usuario_id = ? AND usado_em IS NULL', [usuarioId]);
+    await connection.commit();
+  } catch (error) { await connection.rollback(); throw error; }
+  finally { connection.release(); }
+}
+
+async function atualizarPerfil(id, nome) {
+  await db.query('UPDATE usuarios SET nome = ? WHERE id = ?', [nome, id]);
+  return buscarUsuarioSeguro(id);
+}
+
+module.exports = { criarEmpresaComAdmin, buscarPorEmail, buscarUsuarioSeguro, atualizarPerfil, criarTokenRecuperacao, buscarUsuarioPorToken, concluirRecuperacao };

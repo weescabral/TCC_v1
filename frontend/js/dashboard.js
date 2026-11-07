@@ -9,6 +9,22 @@ function obterToken() {
   return localStorage.getItem('sensus_token');
 }
 
+function classeDesempenho(valor) {
+  const n = Number(valor || 0);
+  if (n < 50) return 'performance-critical';
+  if (n < 70) return 'performance-low';
+  if (n < 85) return 'performance-medium';
+  return 'performance-good';
+}
+
+function corDesempenho(valor) {
+  const n = Number(valor || 0);
+  if (n < 50) return '#dc2626';
+  if (n < 70) return '#f97316';
+  if (n < 85) return '#eab308';
+  return '#16a34a';
+}
+
 function formatarPercentual(valor) {
   return `${Number(valor || 0).toFixed(1)}%`;
 }
@@ -27,39 +43,34 @@ function formatarData(data) {
 
 function obterClassificacao(percentual) {
   const valor = Number(percentual || 0);
+  if (valor >= 85) return { texto: 'Excelente', classe: 'success' };
+  if (valor >= 70) return { texto: 'Regular', classe: 'warning' };
+  if (valor >= 50) return { texto: 'Atenção', classe: 'warning' };
+  if (valor > 0) return { texto: 'Crítico', classe: 'danger' };
+  return { texto: 'Sem dados', classe: 'neutral' };
+}
 
-  if (valor >= 90) {
-    return {
-      texto: 'Excelente',
-      classe: 'success',
-    };
+async function verificarPrimeiroAcesso() {
+  // Permite abrir o perfil pelo primeiro passo do tutorial sem redirecionar de volta.
+  const parametros = new URLSearchParams(window.location.search);
+  if (parametros.get('abrirPerfil') === '1') return false;
+  const usuario = JSON.parse(localStorage.getItem('sensus_usuario') || '{}');
+  if (usuario.perfil !== 'administrador') return;
+  try {
+    const resposta = await fetch(`${API_URL}/onboarding`, { headers: { Authorization: `Bearer ${obterToken()}` } });
+    if (!resposta.ok) return;
+    const estado = await resposta.json();
+    if (estado.status === 'pendente') {
+      window.location.href = './configuracao-inicial.html';
+      return true;
+    }
+    const card = document.getElementById('onboardingResume');
+    if (card && estado.status === 'adiado') card.hidden = false;
+    return false;
+  } catch (erro) {
+    console.warn('Não foi possível verificar o primeiro acesso:', erro);
+    return false;
   }
-
-  if (valor >= 75) {
-    return {
-      texto: 'Bom',
-      classe: 'success',
-    };
-  }
-
-  if (valor >= 60) {
-    return {
-      texto: 'Regular',
-      classe: 'warning',
-    };
-  }
-
-  if (valor > 0) {
-    return {
-      texto: 'Crítico',
-      classe: 'danger',
-    };
-  }
-
-  return {
-    texto: 'Sem dados',
-    classe: 'neutral',
-  };
 }
 
 async function carregarDashboard() {
@@ -71,6 +82,11 @@ async function carregarDashboard() {
   }
 
   try {
+    // Verifica o assistente antes de carregar o dashboard.
+    // Se for o primeiro acesso, redireciona para a configuração inicial.
+    const redirecionandoParaConfiguracao = await verificarPrimeiroAcesso();
+    if (redirecionandoParaConfiguracao) return;
+
     const resposta = await fetch(`${API_URL}/dashboard`, {
       method: 'GET',
       headers: {
@@ -118,11 +134,13 @@ async function carregarDashboard() {
 function preencherKPIs(kpis = {}) {
   const classificacao = obterClassificacao(kpis.indiceAtual);
 
-  document.getElementById('indiceAtual').textContent =
-    formatarPercentual(kpis.indiceAtual);
+  const indiceElemento = document.getElementById('indiceAtual');
+  indiceElemento.textContent = formatarPercentual(kpis.indiceAtual);
+  indiceElemento.className = classeDesempenho(kpis.indiceAtual);
 
-  document.getElementById('mediaGeral').textContent =
-    formatarPercentual(kpis.mediaGeral);
+  const mediaElemento = document.getElementById('mediaGeral');
+  mediaElemento.textContent = formatarPercentual(kpis.mediaGeral);
+  mediaElemento.className = classeDesempenho(kpis.mediaGeral);
 
   document.getElementById('totalAuditorias').textContent =
     Number(kpis.totalAuditorias || 0);
@@ -168,6 +186,12 @@ function renderizarEvolucao(evolucao = []) {
           borderWidth: 3,
           tension: 0.35,
           fill: true,
+          segment: {
+            borderColor: (ctx) => corDesempenho((Number(ctx.p0.parsed.y) + Number(ctx.p1.parsed.y)) / 2)
+          },
+          pointBackgroundColor: (ctx) => corDesempenho(ctx.parsed.y),
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
         },
       ],
     },
@@ -225,6 +249,8 @@ function renderizarSensos(porSenso = []) {
           data: porSenso.map((item) => Number(item.media || 0)),
           borderWidth: 1,
           borderRadius: 8,
+          backgroundColor: porSenso.map(item => corDesempenho(item.media)),
+          borderColor: porSenso.map(item => corDesempenho(item.media)),
         },
       ],
     },
@@ -271,6 +297,10 @@ function renderizarRadar(porSenso = []) {
           data: porSenso.map((item) => Number(item.media || 0)),
           borderWidth: 2,
           fill: true,
+          borderColor: '#0b2a52',
+          backgroundColor: 'rgba(11, 42, 82, 0.10)',
+          pointBackgroundColor: porSenso.map(item => corDesempenho(item.media)),
+          pointBorderColor: '#ffffff',
         },
       ],
     },
@@ -315,13 +345,13 @@ function renderizarRanking(setores = []) {
           <div class="ranking-content">
             <div class="ranking-header">
               <strong>${setor.nome}</strong>
-              <span>${formatarPercentual(score)}</span>
+              <span class="${classeDesempenho(score)}">${formatarPercentual(score)}</span>
             </div>
 
             <div class="progress-track">
               <div
-                class="progress-value"
-                style="width: ${Math.min(score, 100)}%"
+                class="progress-value ${classeDesempenho(score)}"
+                style="width: ${Math.max(0, Math.min(score, 100))}%"
               ></div>
             </div>
           </div>
@@ -347,6 +377,13 @@ function renderizarPlanos(planos = []) {
       datasets: [
         {
           data: planos.map((item) => Number(item.total || 0)),
+          backgroundColor: planos.map((item) => {
+            const status = String(item.status || '').toLowerCase();
+            if (status.includes('conclu') || status.includes('finaliz')) return '#16a34a';
+            if (status.includes('andamento') || status.includes('execu')) return '#eab308';
+            if (status.includes('pend') || status.includes('atras')) return '#dc2626';
+            return '#64748b';
+          }),
           borderWidth: 2,
         },
       ],

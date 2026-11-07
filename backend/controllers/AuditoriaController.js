@@ -1,17 +1,29 @@
 const AuditoriaModel = require('../models/AuditoriaModel');
+const SetorModel = require('../models/SetorModel');
+
+function auditorTemAcesso(req, auditoria) {
+  return req.usuario.perfil !== 'auditor' || Number(auditoria?.setor_auditor_id) === Number(req.usuario.id);
+}
 
 async function listar(req, res) {
-  return res.json(await AuditoriaModel.listar(req.usuario.empresa_id));
+  return res.json(await AuditoriaModel.listar(req.usuario.empresa_id, req.usuario));
 }
 
 async function buscar(req, res) {
   const auditoria = await AuditoriaModel.buscarPorId(req.params.id, req.usuario.empresa_id);
   if (!auditoria) return res.status(404).json({ erro: 'Auditoria não encontrada.' });
+  if (!auditorTemAcesso(req, auditoria)) return res.status(403).json({ erro: 'Você não possui acesso a esta auditoria.' });
   return res.json(auditoria);
 }
 
 async function criar(req, res) {
   if (!req.body.setor_id) return res.status(400).json({ erro: 'Informe o setor_id.' });
+
+  const setor = await SetorModel.buscarPorId(req.body.setor_id, req.usuario.empresa_id, false);
+  if (!setor) return res.status(404).json({ erro: 'Setor não encontrado ou inativo.' });
+  if (req.usuario.perfil === 'auditor' && Number(setor.auditor_id) !== Number(req.usuario.id)) {
+    return res.status(403).json({ erro: 'Você só pode iniciar auditorias nos setores atribuídos a você.' });
+  }
 
   const tipo = req.body.tipo || 'periodica';
   const prazo = req.body.prazo;
@@ -68,10 +80,9 @@ async function salvarResposta(req, res) {
   );
 
   if (!auditoria) {
-    return res.status(404).json({
-      erro: 'Auditoria não encontrada.',
-    });
+    return res.status(404).json({ erro: 'Auditoria não encontrada.' });
   }
+  if (!auditorTemAcesso(req, auditoria)) return res.status(403).json({ erro: 'Você não possui acesso a esta auditoria.' });
 
   if (auditoria.status === 'finalizada') {
     return res.status(409).json({
@@ -96,6 +107,9 @@ async function salvarResposta(req, res) {
 }
 
 async function finalizar(req, res) {
+  const existente = await AuditoriaModel.buscarPorId(req.params.id, req.usuario.empresa_id);
+  if (!existente) return res.status(404).json({ erro: 'Auditoria não encontrada.' });
+  if (!auditorTemAcesso(req, existente)) return res.status(403).json({ erro: 'Você não possui acesso a esta auditoria.' });
   const resultado = await AuditoriaModel.finalizar(
     req.params.id,
     req.usuario.empresa_id

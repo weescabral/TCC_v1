@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensus 5S | Configuração inicial</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/onboarding.css">
+  <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+</head>
+<body class="onboarding-page">
+  <main class="onboarding-shell">
+    <header class="onboarding-brand"><span>⬡</span><strong>SENSUS <small>5S</small></strong><a href="./dashboard.html">Voltar ao dashboard</a></header>
+    <section class="onboarding-card">
+      <div class="onboarding-kicker">PRIMEIROS PASSOS</div>
+      <h1>Vamos preparar sua empresa?</h1>
+      <p class="onboarding-intro">Este guia apresenta as principais configurações para começar a utilizar o Sensus 5S. Você pode fazer tudo agora ou pular e continuar quando quiser.</p>
+      <div class="progress-track"><div id="progressFill"></div></div>
+      <div class="step-meta"><span id="stepCount">Etapa 1 de 4</span><span id="stepPercent">25%</span></div>
+      <div class="onboarding-content">
+        <div class="step-icon" id="stepIcon"><i class="icon-building-2"></i></div>
+        <div class="step-copy">
+          <h2 id="stepTitle">Dados da empresa</h2>
+          <p id="stepDescription"></p>
+          <div class="step-tip" id="stepTip"></div>
+          <a id="stepAction" class="btn-outline" href="./setores.html" hidden>Ir para configuração</a>
+        </div>
+      </div>
+      <div class="onboarding-actions">
+        <button type="button" class="btn-text" id="skipButton">Pular tutorial por agora</button>
+        <div class="action-right">
+          <button type="button" class="btn-outline" id="backButton">Voltar</button>
+          <button type="button" class="btn-primary" id="nextButton">Próxima etapa</button>
+        </div>
+      </div>
+      <p class="onboarding-feedback" id="feedback" role="status"></p>
+    </section>
+    <p class="onboarding-footnote">Você poderá retomar este guia a qualquer momento pelo dashboard.</p>
+  </main>
+  <script src="../js/onboarding.js"></script>
+</body>
+</html>

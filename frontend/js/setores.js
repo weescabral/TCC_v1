@@ -53,6 +53,7 @@ function escapeHtml(value = "") {
 }
 
 async function carregarAuditores() {
+  if (JSON.parse(localStorage.getItem("sensus_usuario") || "{}").perfil !== "administrador") return;
   try {
     const dados = await requisicao("/setores/auditores");
     const auditores = Array.isArray(dados) ? dados : dados.auditores || [];
@@ -118,6 +119,7 @@ async function carregarSetores() {
       const scoreClass = scoreNumber >= 80 ? "success" : scoreNumber >= 60 ? "" : "danger";
       const auditorDefinido = Boolean(setor.auditor_id);
       const periodicidade = setor.periodicidade_auditoria || "mensal";
+      const isAdmin = JSON.parse(localStorage.getItem("sensus_usuario") || "{}").perfil === "administrador";
 
       const card = document.createElement("div");
       card.className = "card sector-card";
@@ -146,11 +148,11 @@ async function carregarSetores() {
         <div class="sector-footer">
           <span>Último Score: <strong class="${scoreClass}">${scoreNumber.toFixed(2)}%</strong></span>
           <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-            <button class="btn-outline" type="button" onclick='iniciarEdicao(${JSON.stringify(setor)})'>Editar</button>
-            ${auditorDefinido
+            ${isAdmin ? `<button class="btn-outline" type="button" onclick='iniciarEdicao(${JSON.stringify(setor)})'>Editar</button>` : ''}
+            ${auditorDefinido && (isAdmin || Number(setor.auditor_id) === Number(JSON.parse(localStorage.getItem("sensus_usuario") || "{}").id))
               ? `<a href="./checklist.html?setor=${encodeURIComponent(setor.id)}" class="btn-outline">Auditar</a>`
-              : `<button type="button" class="btn-outline disabled" disabled title="Defina um auditor responsável antes de auditar">Auditar</button>`}
-            <button class="btn-outline" type="button" onclick='desativarSetor(${setor.id}, ${JSON.stringify(setor.nome)})'>Desativar</button>
+              : `<button type="button" class="btn-outline disabled" disabled title="Este setor não está atribuído a você">Auditar</button>`}
+            ${isAdmin ? `<button class="btn-outline" type="button" onclick='desativarSetor(${setor.id}, ${JSON.stringify(setor.nome)})'>Desativar</button>` : ''}
           </div>
         </div>
       `;

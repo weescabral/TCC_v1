@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const API_URL = 'http://localhost:3000/api';
 let auditoriasCache = [];
 const detalhesAbertos = new Set();
@@ -8,35 +7,6 @@ async function api(endpoint) {
   const response = await fetch(`${API_URL}${endpoint}`, { headers: { Authorization: `Bearer ${obterTokenHistorico()}` } });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.erro || data.mensagem || 'Falha ao consultar o histórico.');
-=======
-(() => {
-  const API_URL = 'http://localhost:3000/api';
-  let auditoriasCache = [];
-  const detalhesAbertos = new Set();
-
-function token() { return localStorage.getItem('sensus_token') || localStorage.getItem('token') || localStorage.getItem('authToken'); }
-async function api(endpoint) {
-  const authToken = token();
-  if (!authToken) throw new Error('Sua sessão não foi encontrada. Saia e entre novamente no sistema.');
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
-  let response;
-  try {
-    response = await fetch(`${API_URL}${endpoint}`, {
-      method: 'GET',
-      cache: 'no-store',
-      signal: controller.signal,
-      headers: { Authorization: `Bearer ${authToken}`, Accept: 'application/json' }
-    });
-  } catch (error) {
-    if (error.name === 'AbortError') throw new Error('A API demorou mais de 12 segundos para responder. Confira se o backend está iniciado e se a consulta ao banco terminou.');
-    throw new Error('Não foi possível conectar à API do Sensus. Confira se o backend está iniciado em http://localhost:3000.');
-  } finally { clearTimeout(timeout); }
-  const contentType = response.headers.get('content-type') || '';
-  const data = contentType.includes('application/json') ? await response.json().catch(() => ({})) : {};
-  if (!response.ok) throw new Error(data.erro || data.mensagem || `Falha ao consultar o histórico (HTTP ${response.status}).`);
-  if (!contentType.includes('application/json')) throw new Error('A API não retornou JSON. Verifique a URL base e as rotas do backend.');
->>>>>>> 52b09e49628db99d4cb23762cc1539072231c357
   return data;
 }
 function esc(v='') { return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
@@ -74,12 +44,6 @@ async function alternarDetalhe(id) {
   if (detalhesAbertos.has(id)) { detalhesAbertos.delete(id); filtrar(); return; }
   detalhesAbertos.add(id); filtrar(); await carregarDetalhe(id, true);
 }
-<<<<<<< HEAD
-=======
-
-window.alternarDetalhe = alternarDetalhe;
-
->>>>>>> 52b09e49628db99d4cb23762cc1539072231c357
 async function carregarDetalhe(id, mostrarErro=true) {
   const alvo = document.getElementById(`detalhe-${id}`); if (!alvo) return;
   alvo.hidden = false; alvo.innerHTML = '<p>Carregando detalhes da auditoria...</p>';
@@ -104,7 +68,6 @@ async function carregarDetalhe(id, mostrarErro=true) {
 document.getElementById('buscaHistorico').addEventListener('input', filtrar);
 document.getElementById('filtroHistoricoStatus').addEventListener('change', filtrar);
 (async function inicializar() {
-<<<<<<< HEAD
   try {
     auditoriasCache = await api('/auditorias');
     auditoriasCache.sort((a,b) => new Date(b.data_auditoria || 0) - new Date(a.data_auditoria || 0));
@@ -113,24 +76,3 @@ document.getElementById('filtroHistoricoStatus').addEventListener('change', filt
     document.getElementById('listaHistorico').innerHTML = `<div class="card history-empty"><h3>Não foi possível carregar o histórico</h3><p style="margin-top:8px">${esc(e.message)}</p><button class="btn-primary" style="margin-top:14px" onclick="location.reload()">Tentar novamente</button></div>`;
   }
 })();
-=======
-  const alvo = document.getElementById('listaHistorico');
-  alvo.innerHTML = '<div class="card history-empty"><p>Carregando auditorias...</p></div>';
-  try {
-    const retorno = await api('/auditorias');
-    // Aceita o formato atual (array) e envelopes comuns de APIs sem quebrar a tela.
-    const lista = Array.isArray(retorno) ? retorno
-      : Array.isArray(retorno.auditorias) ? retorno.auditorias
-      : Array.isArray(retorno.dados) ? retorno.dados
-      : Array.isArray(retorno.data) ? retorno.data : null;
-    if (!lista) throw new Error('A API respondeu, mas não retornou uma lista de auditorias. Verifique o endpoint GET /api/auditorias.');
-    auditoriasCache = lista;
-    auditoriasCache.sort((a,b) => new Date(b.data_auditoria || b.iniciada_em || b.finalizada_em || 0) - new Date(a.data_auditoria || a.iniciada_em || a.finalizada_em || 0));
-    filtrar();
-  } catch (e) {
-    console.error('[Histórico de Auditorias]', e);
-    alvo.innerHTML = `<div class="card history-empty"><h3>Não foi possível carregar o histórico</h3><p style="margin-top:8px">${esc(e.message)}</p><button class="btn-primary" style="margin-top:14px" onclick="location.reload()">Tentar novamente</button></div>`;
-  }
-})();
-})();
->>>>>>> 52b09e49628db99d4cb23762cc1539072231c357

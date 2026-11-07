@@ -54,7 +54,6 @@ Para a primeira fase das melhorias, execute no MySQL/Railway:
 `001_melhorias_setores_auditores.sql`
 
 Ela adiciona código do setor, responsável pelo cadastro, auditor responsável, periodicidade, histórico de inativação, dados de prazo/execução da auditoria e a tabela de evidências.
-<<<<<<< HEAD
 
 
 ## Checklist ponderado de 50 critérios (Fase 2)
@@ -68,5 +67,11 @@ A escala de avaliação da auditoria é de 1 a 5. O cálculo ponderado usa `nota
 ## Configuração de ambiente
 
 O arquivo `.env` contém credenciais e não deve ser compartilhado nem versionado. Use `.env.example` como modelo e preencha os valores locais antes de iniciar o backend.
-=======
->>>>>>> 52b09e49628db99d4cb23762cc1539072231c357
+
+## Fase 2 — Gestão dos planos de ação
+
+A tela `frontend/pages/planos-acao.html` agora apresenta indicadores de ações totais, pendentes, em andamento, concluídas e atrasadas; filtros por status, prioridade e prazo; e campos para causa raiz, resultado esperado, ação corretiva e prazo de conclusão.
+
+Antes de usar os novos campos, faça backup do banco e execute uma única vez `backend/database/migrations/003_gestao_planos_acao.sql` no banco correto. A migration adiciona `prazo_conclusao`, `causa_raiz`, `resultado_esperado` e `atualizado_em` à tabela `planos_acao`. Não apague nem recrie a tabela existente.
+
+A tela mantém a criação automática de planos a partir das respostas críticas da auditoria. A atribuição de responsáveis permanece como o responsável já registrado na auditoria; a edição/atribuição por usuário será uma etapa posterior, após definirmos a regra de permissão para administradores e auditores.

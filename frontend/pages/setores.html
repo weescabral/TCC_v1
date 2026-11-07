@@ -92,11 +92,17 @@
   <script src="../js/components.js"></script>
   <script>
     renderSidebar("setores");
+    const usuario = getUsuarioLogado();
+    const admin = usuario.perfil === "administrador";
+    if (!admin) {
+      document.getElementById("cadastroSetor").hidden = true;
+      document.querySelector(".section-title").textContent = "Meus Setores";
+    }
     renderTopbar(
-      "Setores",
-      "Gerencie os ambientes avaliados nas auditorias 5S.",
-      "+ Novo Setor",
-      "#cadastroSetor"
+      admin ? "Setores" : "Meus Setores",
+      admin ? "Gerencie os ambientes e atribua auditores responsáveis." : "Consulte os setores atribuídos a você para realizar auditorias.",
+      admin ? "+ Novo Setor" : "",
+      admin ? "#cadastroSetor" : ""
     );
   </script>
   <script src="../js/setores.js"></script>

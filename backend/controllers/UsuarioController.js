@@ -8,10 +8,15 @@ async function listar(req, res) {
 }
 
 async function criar(req, res) {
-  const { nome, email, senha, perfil } = req.body;
+  const nome = String(req.body.nome || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const { senha, perfil } = req.body;
   if (!nome || !email || !senha) {
     return res.status(400).json({ erro: 'Nome, e-mail e senha são obrigatórios.' });
   }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ erro: 'Informe um e-mail válido.' });
+  if (String(senha).length < 8) return res.status(400).json({ erro: 'A senha deve ter pelo menos 8 caracteres.' });
 
   if (perfil && !['administrador', 'auditor'].includes(perfil)) {
     return res.status(400).json({ erro: 'Perfil inválido.' });
@@ -29,11 +34,18 @@ async function criar(req, res) {
 }
 
 async function atualizar(req, res) {
-  const { nome, email, perfil } = req.body;
+  const nome = String(req.body.nome || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const { perfil } = req.body;
   if (!nome || !email) return res.status(400).json({ erro: 'Nome e e-mail são obrigatórios.' });
 
   if (perfil && !['administrador', 'auditor'].includes(perfil)) {
     return res.status(400).json({ erro: 'Perfil inválido.' });
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ erro: 'Informe um e-mail válido.' });
+  if (Number(req.params.id) === Number(req.usuario.id) && perfil && perfil !== 'administrador') {
+    return res.status(409).json({ erro: 'Você não pode remover seu próprio perfil de administrador.' });
   }
 
   const usuario = await UsuarioModel.atualizar(req.params.id, req.usuario.empresa_id, {
@@ -47,7 +59,7 @@ async function atualizar(req, res) {
 }
 
 async function trocarSenha(req, res) {
-  if (!req.body.senha) return res.status(400).json({ erro: 'Informe a nova senha.' });
+  if (!req.body.senha || String(req.body.senha).length < 8) return res.status(400).json({ erro: 'A nova senha deve ter pelo menos 8 caracteres.' });
   const senhaHash = await bcrypt.hash(req.body.senha, 10);
   await UsuarioModel.trocarSenha(req.params.id, req.usuario.empresa_id, senhaHash);
   return res.json({ mensagem: 'Senha atualizada com sucesso.' });
@@ -59,6 +71,8 @@ async function remover(req, res) {
   if (!motivo) {
     return res.status(400).json({ erro: 'Informe o motivo da inativação do auditor.' });
   }
+
+  if (Number(req.params.id) === Number(req.usuario.id)) return res.status(409).json({ erro: 'Você não pode inativar seu próprio usuário.' });
 
   const usuario = await UsuarioModel.buscarPorId(req.params.id, req.usuario.empresa_id);
   if (!usuario) return res.status(404).json({ erro: 'Usuário não encontrado.' });

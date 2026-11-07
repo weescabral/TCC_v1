@@ -1,4 +1,32 @@
+
+# Dependências
 node_modules/
-backend/database.db
+backend/node_modules/
+
+# Variáveis de ambiente e segredos
 .env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+
+# Banco de dados local
+backend/database.db
+
+# Arquivos do sistema operacional
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Arquivos temporários
+*.tmp
+*.bak
+
+# Evidências de auditoria
+# Mantém a pasta, mas não envia imagens dos usuários ao Git
+backend/uploads/evidencias/*
+!backend/uploads/evidencias/.gitkeep

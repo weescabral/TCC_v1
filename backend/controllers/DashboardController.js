@@ -18,6 +18,17 @@ async function resumo(req, res) {
       piorScore: Number(dados.kpis.piorScore || 0),
     },
 
+    setoresPendentes: (dados.setoresPendentes || []).map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      periodicidade_auditoria: item.periodicidade_auditoria,
+      auditor_nome: item.auditor_nome,
+      ultima_auditoria: item.ultima_auditoria,
+      proxima_auditoria: item.proxima_auditoria,
+    })),
+
+    setoresAuditados: Number(dados.setoresAuditados || 0),
+
     porSetor: dados.porSetor.map((item) => ({
       id: item.id,
       nome: item.nome,

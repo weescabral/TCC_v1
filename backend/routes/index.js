@@ -10,6 +10,7 @@ const auditoriaRoutes = require('./auditoriaRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
 const evidenciaRoutes = require('./evidenciaRoutes');
 const planoAcaoRoutes = require('./planoAcaoRoutes');
+const onboardingRoutes = require('./onboardingRoutes');
 
 const router = express.Router();
 
@@ -23,5 +24,6 @@ router.use('/auditorias', auditoriaRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/evidencias', evidenciaRoutes);
 router.use('/planos-acao', planoAcaoRoutes);
+router.use('/onboarding', onboardingRoutes);
 
 module.exports = router;

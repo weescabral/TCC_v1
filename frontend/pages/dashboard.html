@@ -22,6 +22,12 @@
     <main class="main-content">
       <div id="topbar"></div>
 
+      <section class="card onboarding-resume" id="onboardingResume" hidden>
+        <div><small>CONFIGURAÇÃO DA EMPRESA</small><h3>Continue preparando sua empresa</h3>
+          <p>Retome o guia de primeiros passos quando for conveniente.</p></div>
+        <a class="btn-primary" href="./configuracao-inicial.html">Continuar configuração</a>
+      </section>
+
       <section class="stats-grid dashboard-kpis">
         <article class="card stat-card">
           <div class="stat-icon">
@@ -201,6 +207,12 @@
 
   <script>
     renderSidebar("dashboard");
+
+    // Abre o mesmo modal acionado por "Editar perfil" na lateral.
+    if (new URLSearchParams(window.location.search).get("abrirPerfil") === "1") {
+      abrirPerfil();
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
     renderTopbar(
       "Dashboard Executivo",
