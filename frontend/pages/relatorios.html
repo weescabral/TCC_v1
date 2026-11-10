@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensus | Relatórios</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+  <style>
+    .reports-intro{margin-bottom:18px}
+    .reports-layout{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:18px;align-items:start}
+    .reports-form{display:grid;gap:14px}
+    .reports-form label{display:block;font-weight:700;margin-bottom:6px}
+    .reports-form input,.reports-form select,.reports-form textarea{width:100%}
+    .reports-help{font-size:.85rem;color:var(--text-muted,#64748b);line-height:1.5}
+    .reports-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .reports-actions .btn-primary,.reports-actions button{border:1px solid #ffbf00;background:#ffbf00;color:#10213b;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer}
+    .reports-actions button:disabled{opacity:.55;cursor:not-allowed}
+    .reports-secondary{border:1px solid var(--border-color,#cbd5e1)!important;background:transparent!important;color:var(--text-color,#334155)!important}
+    .report-preview{min-height:260px}
+    .report-placeholder{padding:40px 20px;text-align:center;color:var(--text-muted,#64748b)}
+    .report-placeholder i{font-size:2rem;display:block;margin-bottom:12px}
+    .report-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+    .report-kpi{padding:13px;border:1px solid var(--border-color,#dbe3ed);border-radius:10px;background:rgba(148,163,184,.08)}
+    .report-kpi small{display:block;color:var(--text-muted,#64748b);font-size:.75rem;font-weight:700;text-transform:uppercase}
+    .report-kpi strong{display:block;font-size:1.35rem;margin-top:5px}
+    .report-table-wrap{overflow:auto;margin-top:12px}
+    .report-table{width:100%;border-collapse:collapse;font-size:.88rem}
+    .report-table th,.report-table td{padding:9px 10px;border-bottom:1px solid var(--border-color,#dbe3ed);text-align:left}
+    .report-table th{font-size:.75rem;text-transform:uppercase;color:var(--text-muted,#64748b)}
+    .report-section-title{margin:18px 0 8px}
+    .report-status{margin-top:12px;font-size:.9rem}
+    .report-status.error{color:#dc2626}.report-status.success{color:#16a34a}
+    .report-percent{font-weight:800;white-space:nowrap}
+    .percent-vermelho{color:#ef4444!important}
+    .percent-laranja{color:#f97316!important}
+    .percent-amarelo{color:#eab308!important}
+    .percent-verde{color:#22c55e!important}
+    .percent-sem-cor{color:inherit}
+    .email-fields{display:grid;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border-color,#dbe3ed)}
+    .email-fields[hidden],#filtroAuditoria[hidden],#filtroSetor[hidden],#filtroPeriodo[hidden]{display:none!important}
+    @media(max-width:900px){.reports-layout{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <div id="sidebar"></div>
+    <main class="main-content">
+      <div id="topbar"></div>
+      <section class="card reports-intro">
+        <div class="card-heading">
+          <div>
+            <h3>Central de Relatórios</h3>
+            <p>Gere relatórios de auditorias, setores e desempenho gerencial. Exporte em PDF ou envie por e-mail.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="reports-layout">
+        <section class="card">
+          <h3>Configurar relatório</h3>
+          <form id="reportForm" class="reports-form">
+            <div>
+              <label for="tipoRelatorio">Tipo de relatório</label>
+              <select id="tipoRelatorio" class="form-control" required>
+                <option value="auditoria">Relatório de auditoria</option>
+                <option value="setor">Relatório por setor</option>
+                <option value="gerencial">Relatório gerencial</option>
+                <option value="periodico">Relatório periódico</option>
+              </select>
+            </div>
+            <div id="filtroAuditoria">
+              <label for="auditoriaRelatorio">Auditoria finalizada</label>
+              <select id="auditoriaRelatorio" class="form-control"><option value="">Selecione uma auditoria</option></select>
+            </div>
+            <div id="filtroSetor" hidden>
+              <label for="setorRelatorio">Setor</label>
+              <select id="setorRelatorio" class="form-control"><option value="">Selecione um setor</option></select>
+            </div>
+            <div id="filtroPeriodo" hidden>
+              <label for="dataInicio">Período inicial</label>
+              <input id="dataInicio" class="form-control" type="date">
+              <label for="dataFim" style="margin-top:10px">Período final</label>
+              <input id="dataFim" class="form-control" type="date">
+            </div>
+            <p class="reports-help">Os relatórios oficiais consideram somente auditorias finalizadas. Auditores visualizam apenas os setores sob sua responsabilidade. O relatório gerencial completo é exclusivo do administrador.</p>
+            <div class="reports-actions">
+              <button type="submit" id="gerarRelatorioBtn"><i class="icon-file-chart-column"></i> Gerar prévia</button>
+            </div>
+          </form>
+          <div id="reportStatus" class="report-status" role="status" aria-live="polite"></div>
+        </section>
+
+        <section class="card report-preview" id="reportPreview">
+          <div class="report-placeholder">
+            <i class="icon-file-text"></i>
+            <strong>Nenhum relatório gerado</strong>
+            <p>Escolha um modelo e clique em “Gerar prévia” para visualizar os dados.</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="card" id="exportCard" style="margin-top:18px" hidden>
+        <div class="card-heading"><div><h3>Exportar e compartilhar</h3><p>Baixe o documento ou envie o PDF como anexo.</p></div></div>
+        <div class="reports-actions">
+          <button type="button" id="baixarPdfBtn"><i class="icon-download"></i> Baixar PDF</button>
+          <button type="button" id="mostrarEmailBtn"><i class="icon-mail"></i> Enviar por e-mail</button>
+        </div>
+        <form id="emailForm" class="email-fields" hidden>
+          <div><label for="destinatarioEmail">E-mail do destinatário</label><input id="destinatarioEmail" class="form-control" type="email" placeholder="nome@empresa.com" required></div>
+          <div><label for="assuntoEmail">Assunto</label><input id="assuntoEmail" class="form-control" type="text" value="Relatório Sensus 5S"></div>
+          <div><label for="mensagemEmail">Mensagem</label><textarea id="mensagemEmail" class="form-control" rows="3">Olá! Segue em anexo o relatório gerado pelo Sensus 5S.</textarea></div>
+          <div class="reports-actions"><button type="submit" id="enviarPdfBtn"><i class="icon-send"></i> Enviar PDF</button></div>
+        </form>
+        <div id="emailStatus" class="report-status" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="../js/components.js"></script>
+  <script>renderSidebar("relatorios"); renderTopbar("Relatórios e Exportações", "Gere documentos gerenciais e compartilhe resultados do Sensus 5S.");</script>
+  <script src="../js/protegerPagina.js"></script>
+  <script src="../js/services/api.js"></script>
+  <script src="../js/relatorios.js"></script>
+</body>
+</html>

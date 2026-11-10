@@ -197,6 +197,7 @@ async function criar({
     data_auditoria = null
 }) {
     const connection = await db.getConnection();
+    let bloqueioCodigo = null;
 
     try {
         await connection.beginTransaction();
@@ -282,7 +283,26 @@ async function criar({
             throw error;
         }
 
-        const codigo = `AUD-${Date.now()}`;
+        // Sequência anual por empresa. O bloqueio impede códigos repetidos
+        // quando duas auditorias são iniciadas simultaneamente.
+        const anoCodigo = new Date().getFullYear();
+        bloqueioCodigo = `sensus_aud_${empresa_id}_${anoCodigo}`;
+        const [[lock]] = await connection.query('SELECT GET_LOCK(?, 10) AS obtido', [bloqueioCodigo]);
+        if (Number(lock.obtido) !== 1) {
+            const error = new Error('Não foi possível reservar o próximo código. Tente novamente.');
+            error.status = 503;
+            throw error;
+        }
+
+        const prefixo = `AUD-${anoCodigo}-`;
+        const [[sequencia]] = await connection.query(
+            `SELECT COALESCE(MAX(CAST(SUBSTRING(codigo, ?) AS UNSIGNED)), 0) AS ultimo
+             FROM auditorias
+             WHERE empresa_id = ? AND codigo REGEXP ?`,
+            [prefixo.length + 1, empresa_id, `^AUD-${anoCodigo}-[0-9]+$`]
+        );
+        const proximo = Number(sequencia.ultimo) + 1;
+        const codigo = `${prefixo}${String(proximo).padStart(4, '0')}`;
 
         const [result] = await connection.query(
             `INSERT INTO auditorias
@@ -345,6 +365,10 @@ async function criar({
         await connection.rollback();
         throw error;
     } finally {
+        if (bloqueioCodigo) {
+            try { await connection.query('SELECT RELEASE_LOCK(?)', [bloqueioCodigo]); }
+            catch (e) { console.error('Falha ao liberar bloqueio do código da auditoria:', e.message); }
+        }
         connection.release();
     }
 }
@@ -578,26 +602,8 @@ async function recalcularAuditoria(auditoriaId) {
         ]
     );
 
-    const [[auditoria]] = await db.query(
-        `
-        SELECT setor_id
-        FROM auditorias
-        WHERE id = ?
-        LIMIT 1
-        `,
-        [auditoriaId]
-    );
-
-    if (auditoria?.setor_id) {
-        await db.query(
-            `
-            UPDATE setores
-            SET score_atual = ?
-            WHERE id = ?
-            `,
-            [percentual, auditoria.setor_id]
-        );
-    }
+    // O score do setor só é atualizado após a auditoria ser finalizada.
+    // Respostas parciais e auditorias canceladas não alteram o último resultado oficial.
 
     return {
         total,
@@ -680,6 +686,17 @@ async function finalizar(id, empresaId) {
           AND empresa_id = ?
         `,
         [id, empresaId]
+    );
+
+    // Publica o último score do setor somente depois da conclusão dos cinco sensos.
+    await db.query(
+        `
+        UPDATE setores
+        SET score_atual = ?
+        WHERE id = ?
+          AND empresa_id = ?
+        `,
+        [totais.percentual, auditoria.setor_id, empresaId]
     );
 
     const [[dadosTempo]] = await db.query(

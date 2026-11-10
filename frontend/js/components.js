@@ -45,6 +45,9 @@ function renderSidebar(activePage = "") {
         <a href="./historico-auditorias.html" title="Histórico de Auditorias" class="${activePage === "historico" ? "active" : ""}">
           <i class="icon-history"></i><span>Histórico de Auditorias</span>
         </a>
+        <a href="./relatorios.html" title="Relatórios" class="${activePage === "relatorios" ? "active" : ""}">
+          <i class="icon-file-chart-column"></i><span>Relatórios</span>
+        </a>
         <a href="./sobre-gestao.html" title="Guia da Metodologia" class="${activePage === "guia" ? "active" : ""}">
           <i class="icon-book-open"></i><span>Guia da Metodologia</span>
         </a>
@@ -61,6 +64,17 @@ function renderSidebar(activePage = "") {
       </button>
     </aside>
   `;
+
+  // Rodapé institucional único em todas as páginas internas do sistema.
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent && !mainContent.querySelector('.sensus-copyright')) {
+    const footer = document.createElement('div');
+    footer.className = 'sensus-copyright';
+    footer.setAttribute('aria-label', '© 2026 Sensus 5S. Todos os direitos reservados.');
+    footer.textContent = '© 2026 Sensus 5S. Todos os direitos reservados.';
+    mainContent.appendChild(footer);
+  }
+
   if (!document.getElementById('sensus-profile-modal')) {
     document.body.insertAdjacentHTML('beforeend', `
       <div class="sensus-modal-backdrop" id="sensus-profile-modal" aria-hidden="true">
@@ -170,6 +184,7 @@ function renderTopbar(title, subtitle, buttonText = "", buttonLink = "") {
     <header class="topbar">
       <div class="page-title"><h1>${title}</h1><p>${subtitle}</p></div>
       <div class="topbar-actions">
+        <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Ativar tema escuro" title="Alternar tema claro/escuro" onclick="alternarTema()"><i class="icon-moon"></i></button>
         <div class="notification-wrap">
           <button class="icon-btn notification-button" id="notification-button" type="button" aria-label="Notificações" aria-expanded="false" onclick="alternarNotificacoes()">
             <i class="icon-bell"></i><span class="notification-dot" id="notification-dot"></span>
@@ -226,10 +241,35 @@ async function carregarNotificacoes() {
 function alternarNotificacoes(force) {
   const panel = document.getElementById('notification-panel');
   const button = document.getElementById('notification-button');
-  if (!panel) return;
+  const wrap = document.querySelector('.notification-wrap');
+  if (!panel || !button || !wrap) return;
+
   const abrir = typeof force === 'boolean' ? force : panel.hidden;
+
+  if (abrir && document.documentElement.dataset.theme === 'escuro') {
+    // Retira o painel de qualquer stacking context/overflow da página.
+    // Assim nenhum cartão consegue ficar por cima ou desfocar seu conteúdo.
+    if (panel.parentElement !== document.body) {
+      document.body.appendChild(panel);
+    }
+    const rect = button.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.top = `${Math.min(rect.bottom + 12, window.innerHeight - 180)}px`;
+    panel.style.right = `${Math.max(12, window.innerWidth - rect.right)}px`;
+    panel.style.left = 'auto';
+    panel.style.zIndex = '2147483647';
+  } else if (!abrir && panel.parentElement === document.body) {
+    // Devolve o painel ao cabeçalho ao fechar, mantendo a estrutura original.
+    wrap.appendChild(panel);
+    panel.style.removeProperty('position');
+    panel.style.removeProperty('top');
+    panel.style.removeProperty('right');
+    panel.style.removeProperty('left');
+    panel.style.removeProperty('z-index');
+  }
+
   panel.hidden = !abrir;
-  button?.setAttribute('aria-expanded', String(abrir));
+  button.setAttribute('aria-expanded', String(abrir));
 }
 
 function logout() {
@@ -238,3 +278,31 @@ function logout() {
   localStorage.removeItem('sensus_usuario');
   window.location.href = "../index.html";
 }
+
+
+// Tema claro/escuro persistente em todas as páginas internas.
+function aplicarTema() {
+  const tema = localStorage.getItem('sensus_tema') || 'claro';
+  document.documentElement.dataset.theme = tema;
+  const botao = document.getElementById('theme-toggle');
+  if (botao) {
+    botao.innerHTML = tema === 'escuro' ? '<i class="icon-sun"></i>' : '<i class="icon-moon"></i>';
+    botao.setAttribute('aria-label', tema === 'escuro' ? 'Ativar tema claro' : 'Ativar tema escuro');
+  }
+}
+function alternarTema() {
+  const proximo = (localStorage.getItem('sensus_tema') || 'claro') === 'claro' ? 'escuro' : 'claro';
+  localStorage.setItem('sensus_tema', proximo); aplicarTema(); window.dispatchEvent(new CustomEvent('sensus:tema-alterado', { detail: { tema: proximo } }));
+}
+document.addEventListener('click', (event) => {
+  const botao = event.target.closest('[data-password-toggle]');
+  if (!botao) return;
+  const campo = document.getElementById(botao.dataset.passwordToggle);
+  if (!campo) return;
+  const mostrar = campo.type === 'password';
+  campo.type = mostrar ? 'text' : 'password';
+  botao.innerHTML = mostrar ? '<i class="icon-eye-off"></i>' : '<i class="icon-eye"></i>';
+  botao.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+  botao.setAttribute('aria-pressed', String(mostrar));
+});
+document.addEventListener('DOMContentLoaded', aplicarTema);

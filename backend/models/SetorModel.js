@@ -10,7 +10,15 @@ async function listar(empresaId, usuario = null) {
        s.descricao,
        s.responsavel,
        s.localizacao,
-       s.score_atual,
+       (
+         SELECT a.percentual_geral
+         FROM auditorias a
+         WHERE a.setor_id = s.id
+           AND a.empresa_id = s.empresa_id
+           AND a.status = 'finalizada'
+         ORDER BY a.data_auditoria DESC, a.id DESC
+         LIMIT 1
+       ) AS score_atual,
        s.criado_por,
        s.criado_em,
        s.auditor_id,
@@ -41,7 +49,15 @@ async function buscarPorId(id, empresaId, incluirInativos = true) {
        s.descricao,
        s.responsavel,
        s.localizacao,
-       s.score_atual,
+       (
+         SELECT a.percentual_geral
+         FROM auditorias a
+         WHERE a.setor_id = s.id
+           AND a.empresa_id = s.empresa_id
+           AND a.status = 'finalizada'
+         ORDER BY a.data_auditoria DESC, a.id DESC
+         LIMIT 1
+       ) AS score_atual,
        s.criado_por,
        s.criado_em,
        s.auditor_id,

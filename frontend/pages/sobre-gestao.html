@@ -6,6 +6,16 @@
   <title>Sensus | Guia do Sistema 5S</title>
   <link rel="stylesheet" href="../css/styles.css">
   <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+  <style>
+    .guia-relatorios-grid .guia-senso-card h3 { display:flex; align-items:center; gap:8px; }
+    .guia-relatorios-grid .guia-senso-card h3 i { color:#d99500; }
+    .guia-relatorios-grid .guia-senso-card p + p { margin-top:9px; }
+    .reports-guide-action { margin-top:18px; display:flex; justify-content:flex-start; }
+    .reports-guide-action a { display:inline-flex; align-items:center; gap:9px; padding:11px 16px; border-radius:9px; background:#ffbf00; color:#10213b; border:1px solid #ffbf00; font-weight:800; text-decoration:none; }
+    .reports-guide-action a:hover { background:#f2ad00; border-color:#f2ad00; }
+    html[data-theme="escuro"] .guia-relatorios-grid .guia-senso-card { background:rgba(24,36,55,.80); }
+    html[data-theme="escuro"] .guia-relatorios-grid .guia-senso-card h3 { color:#e5edf7; }
+  </style>
 </head>
 <body>
   <div class="app-layout">
@@ -119,6 +129,67 @@
         </div>
       </section>
 
+      <section class="guia-section">
+        <div class="guia-section-heading">
+          <span class="guia-step">05</span>
+          <div><h2>Relatórios e exportações</h2><p>Transforme os resultados das auditorias em documentos para acompanhamento, análise e compartilhamento.</p></div>
+        </div>
+        <div class="card guia-panel">
+          <p class="guia-body-copy">A Central de Relatórios reúne informações registradas no Sensus 5S e permite gerar documentos em PDF. Os relatórios oficiais consideram auditorias finalizadas, para que os indicadores representem avaliações concluídas.</p>
+
+          <div class="guia-sensos-grid guia-relatorios-grid">
+            <article class="card guia-senso-card">
+              <span class="guia-senso-number">01 · INDIVIDUAL</span>
+              <h3><i class="icon-clipboard-check"></i> Relatório de auditoria</h3>
+              <p>Apresenta o resultado de uma auditoria específica: identificação da auditoria e do setor, responsável, percentual geral, desempenho de cada um dos cinco sensos, critérios avaliados, observações, evidências registradas e planos de ação relacionados.</p>
+              <p><strong>Quando usar:</strong> para documentar uma avaliação concluída, compartilhar o resultado com a equipe ou consultar os pontos que precisam de melhoria.</p>
+            </article>
+
+            <article class="card guia-senso-card">
+              <span class="guia-senso-number">02 · SETOR</span>
+              <h3><i class="icon-building-2"></i> Relatório por setor</h3>
+              <p>Reúne o histórico de auditorias de um setor dentro do período escolhido, sua média de desempenho, o resultado mais recente e os planos de ação associados.</p>
+              <p><strong>Quando usar:</strong> para acompanhar a evolução de um setor, comparar resultados ao longo do tempo e verificar ações que ainda exigem acompanhamento.</p>
+            </article>
+
+            <article class="card guia-senso-card">
+              <span class="guia-senso-number">03 · VISÃO GERAL</span>
+              <h3><i class="icon-chart-no-axes-combined"></i> Relatório gerencial</h3>
+              <p>Apresenta uma visão consolidada da empresa, com indicadores gerais, média anual, auditorias finalizadas, desempenho por senso, resultados dos setores, auditorias recentes e distribuição dos planos de ação.</p>
+              <p><strong>Quando usar:</strong> em reuniões de gestão, análise de desempenho e definição de prioridades. Este relatório completo é destinado ao perfil administrador.</p>
+            </article>
+
+            <article class="card guia-senso-card">
+              <span class="guia-senso-number">04 · PERÍODO</span>
+              <h3><i class="icon-calendar-days"></i> Relatório periódico</h3>
+              <p>Consolida as auditorias realizadas entre duas datas. Mostra o resumo mensal, a quantidade de avaliações, as médias, os melhores e menores resultados e o desempenho por setor.</p>
+              <p><strong>Quando usar:</strong> para fechar um mês, trimestre ou ano, observar tendências e avaliar se os resultados estão evoluindo.</p>
+            </article>
+          </div>
+
+          <h3 class="guia-subtitle">Como gerar e compartilhar um relatório?</h3>
+          <div class="guia-steps-list">
+            <div class="guia-how-step"><span>1</span><p><strong>Abra Relatórios</strong> no menu lateral do Sensus 5S para acessar a Central de Relatórios.</p></div>
+            <div class="guia-how-step"><span>2</span><p><strong>Escolha o modelo</strong> que corresponde à sua necessidade: auditoria, setor, gerencial ou periódico.</p></div>
+            <div class="guia-how-step"><span>3</span><p><strong>Informe os filtros solicitados</strong>, como auditoria, setor ou intervalo de datas, e clique em Gerar prévia.</p></div>
+            <div class="guia-how-step"><span>4</span><p><strong>Confira as informações</strong> exibidas na prévia antes de criar o documento.</p></div>
+            <div class="guia-how-step"><span>5</span><p><strong>Baixe o PDF ou envie por e-mail</strong>. Para o envio, informe o endereço do destinatário e confirme a mensagem.</p></div>
+          </div>
+
+          <div class="guia-callout">
+            <i class="icon-info"></i>
+            <p><strong>Importante:</strong> o envio por e-mail depende da configuração de SMTP no backend. Se essa configuração ainda não estiver concluída, será possível gerar e baixar o PDF normalmente, mas o envio ficará indisponível até que o administrador configure o serviço de e-mail.</p>
+          </div>
+          <div class="guia-callout guia-callout-warning">
+            <i class="icon-shield-check"></i>
+            <p><strong>Permissões e confiabilidade:</strong> os relatórios utilizam os dados da empresa autenticada. Auditores têm acesso aos setores sob sua responsabilidade; o relatório gerencial consolidado é restrito ao administrador. Auditorias em rascunho, canceladas ou incompletas não entram nos resultados oficiais.</p>
+          </div>
+          <div class="reports-guide-action">
+            <a class="btn-primary" href="./relatorios.html"><i class="icon-file-chart-column"></i> Acessar Central de Relatórios</a>
+          </div>
+        </div>
+      </section>
+
       <section class="guia-section guia-final-section">
         <div class="card guia-final-card">
           <div class="guia-final-icon"><i class="icon-target"></i></div>
@@ -126,7 +197,6 @@
         </div>
       </section>
 
-      <p class="footer-text">© 2026 Sensus 5S • Brenda, Wesllys e Saranna • TCC ADS UEMA</p>
     </main>
   </div>
   <script src="../js/components.js"></script>

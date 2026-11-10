@@ -1587,3 +1587,324 @@ button:disabled {
 .onboarding-resume p{margin:0;color:#64748b;font-size:13px}
 .onboarding-resume[hidden]{display:none}
 @media(max-width:650px){.onboarding-resume{align-items:flex-start;flex-direction:column}}
+
+/* Rodapé institucional padronizado */
+.sensus-copyright {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  margin: 30px 0 8px; padding: 16px 12px; color: #64748b;
+  font-size: 12px; text-align: center;
+}
+.sensus-copyright-mark {
+  display: inline-grid; place-items: center; width: auto; height: auto;
+  flex: 0 0 auto; border: 0; border-radius: 0;
+  color: #64748b; font-size: 12px; font-weight: 700; line-height: 1;
+}
+
+/* Melhorias de navegação, acessibilidade e tema */
+.topbar-actions { gap: 14px; }
+.theme-toggle { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--borda); border-radius: 11px; background: var(--branco); color: var(--azul); }
+.theme-toggle:hover { background: #eef3fa; }
+.user-password-field { position: relative; display: flex; align-items: center; }
+.user-password-field .form-control { padding-right: 48px; width: 100%; }
+.user-password-field .password-toggle { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: #64748b; font-size: 18px; }
+.user-password-field .password-toggle:hover { background: #eef3fa; color: var(--azul); }
+.plan-collapse-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.management-plan-toggle { display:flex; width:100%; align-items:center; justify-content:space-between; gap:12px; padding:0 0 14px; border:0; background:transparent; color:var(--azul); text-align:left; font-weight:700; }
+.management-plan-toggle-title { display:flex; align-items:center; gap:10px; }
+.management-plan-toggle[aria-expanded="false"] .icon-chevron-down { transform:rotate(-90deg); }
+.management-plan-toggle .icon-chevron-down { transition:transform .18s ease; }
+.management-plan-content { display:block; }
+.management-plan.is-collapsed .management-plan-content { display:none; }
+.plan-complete { display:inline-flex; align-items:center; gap:5px; color:#16865f; font-size:12px; }
+.plan-incomplete { color:#8a6a18; font-size:12px; }
+.coming-soon-link { position:relative; margin-right:10px; }
+.coming-soon-link::after { content:attr(data-tooltip); position:absolute; z-index:20; left:50%; bottom:-38px; transform:translateX(-50%) translateY(4px); white-space:nowrap; padding:7px 10px; border-radius:7px; background:#071b3d; color:#fff; font-size:11px; opacity:0; pointer-events:none; transition:.18s ease; }
+.coming-soon-link:hover::after,.coming-soon-link:focus-visible::after { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* Tema escuro: preferência salva no navegador e compartilhada entre páginas. */
+html[data-theme="escuro"] { color-scheme:dark; --fundo:#101827; --branco:#182437; --texto:#e5edf7; --muted:#a6b4c7; --borda:#334155; --sombra:0 18px 35px rgba(0,0,0,.28); }
+html[data-theme="escuro"] body { background:var(--fundo); color:var(--texto); }
+html[data-theme="escuro"] .main-content { background:var(--fundo); color:var(--texto); }
+html[data-theme="escuro"] .card,
+html[data-theme="escuro"] .management-kpi,
+html[data-theme="escuro"] .management-filters,
+html[data-theme="escuro"] .management-plan,
+html[data-theme="escuro"] .user-row,
+html[data-theme="escuro"] .users-kpis .card { background:#182437; border-color:#334155; color:#e5edf7; }
+html[data-theme="escuro"] h1,html[data-theme="escuro"] h2,html[data-theme="escuro"] h3,
+html[data-theme="escuro"] .users-intro h2,html[data-theme="escuro"] .users-section-heading h2,
+html[data-theme="escuro"] .management-plan h3,html[data-theme="escuro"] .management-context p,
+html[data-theme="escuro"] .user-main strong,html[data-theme="escuro"] .users-kpis strong { color:#e5edf7; }
+html[data-theme="escuro"] p,html[data-theme="escuro"] small,html[data-theme="escuro"] label,
+html[data-theme="escuro"] .management-meta,html[data-theme="escuro"] .management-field,
+html[data-theme="escuro"] .management-plan-footer span,html[data-theme="escuro"] .users-intro p { color:#a6b4c7; }
+html[data-theme="escuro"] .form-control,html[data-theme="escuro"] input,html[data-theme="escuro"] textarea,html[data-theme="escuro"] select { background:#101827; color:#e5edf7; border-color:#475569; }
+html[data-theme="escuro"] .management-context { background:#101827; border-color:#334155; }
+html[data-theme="escuro"] .management-plan-number { background:#263449; color:#cbd5e1; }
+html[data-theme="escuro"] .theme-toggle { background:#263449; color:#fbbf24; border-color:#475569; }
+html[data-theme="escuro"] .notification-panel,html[data-theme="escuro"] .sensus-modal { background:#182437; color:#e5edf7; border-color:#334155; }
+html[data-theme="escuro"] .sensus-copyright { color:#94a3b8; }
+@media(max-width:650px){.plan-collapse-actions{width:100%}.plan-collapse-actions button{flex:1;justify-content:center}}
+
+
+/* Refinamento de contraste e consistência do tema escuro */
+html[data-theme="escuro"] .icon-btn,
+html[data-theme="escuro"] .notification-button,
+html[data-theme="escuro"] .theme-toggle {
+  background: #263449;
+  color: #fbbf24;
+  border-color: #475569;
+}
+html[data-theme="escuro"] .notification-button .icon-bell,
+html[data-theme="escuro"] .notification-button i {
+  color: #fbbf24 !important;
+  opacity: 1;
+  font-size: 18px;
+}
+html[data-theme="escuro"] .notification-button:hover,
+html[data-theme="escuro"] .theme-toggle:hover { background: #334155; color: #fcd34d; }
+html[data-theme="escuro"] .notification-item { border-color: #334155; }
+html[data-theme="escuro"] .notification-item:hover { background: #263449; }
+html[data-theme="escuro"] .notification-item-icon { background: #3b321b; color: #fbbf24; }
+
+/* Ações principais usam o amarelo institucional também no tema escuro. */
+html[data-theme="escuro"] .btn-primary,
+html[data-theme="escuro"] .btn-dark {
+  background: linear-gradient(135deg, #ffd34d, #ffb800);
+  color: #10213b;
+  border: 1px solid #f4b400;
+}
+html[data-theme="escuro"] .btn-primary:hover,
+html[data-theme="escuro"] .btn-dark:hover { background: #ffca28; color: #10213b; }
+html[data-theme="escuro"] .btn-outline { background: #263449; color: #e5edf7; border-color: #475569; }
+html[data-theme="escuro"] .btn-outline:hover { background: #334155; border-color: #fbbf24; }
+html[data-theme="escuro"] .btn-primary.disabled,
+html[data-theme="escuro"] .btn-outline.disabled { opacity: .55; }
+
+/* Indicadores de gestão: números com contraste suficiente. */
+html[data-theme="escuro"] .management-kpi strong,
+html[data-theme="escuro"] .users-kpis strong,
+html[data-theme="escuro"] .dashboard-kpis .stat-card h2 { color: #f8fafc !important; }
+html[data-theme="escuro"] .management-kpi small,
+html[data-theme="escuro"] .dashboard-kpis .stat-card small { color: #cbd5e1; }
+html[data-theme="escuro"] .management-kpi-icon.blue { background: #243d63; color: #93c5fd; }
+html[data-theme="escuro"] .management-kpi-icon.amber { background: #493a1b; color: #fcd34d; }
+html[data-theme="escuro"] .management-kpi-icon.violet { background: #392b56; color: #c4b5fd; }
+html[data-theme="escuro"] .management-kpi-icon.green { background: #173f36; color: #6ee7b7; }
+html[data-theme="escuro"] .management-kpi-icon.red { background: #4a252b; color: #fca5a5; }
+
+/* Histórico: cores de desempenho permanecem consistentes nos dois temas. */
+html[data-theme="escuro"] .performance-critical { color: #f87171 !important; }
+html[data-theme="escuro"] .performance-low { color: #fb923c !important; }
+html[data-theme="escuro"] .performance-medium { color: #facc15 !important; }
+html[data-theme="escuro"] .performance-good { color: #4ade80 !important; }
+
+/* Guia 5S: remover superfícies brancas e reforçar os textos no tema escuro. */
+html[data-theme="escuro"] .guia-intro { background: linear-gradient(110deg, #182437 0%, #1d2d43 100%); }
+html[data-theme="escuro"] .guia-intro h2,
+html[data-theme="escuro"] .guia-section-heading h2,
+html[data-theme="escuro"] .guia-senso-card h3,
+html[data-theme="escuro"] .guia-how-step strong,
+html[data-theme="escuro"] .guia-subtitle,
+html[data-theme="escuro"] .guia-color-notes strong { color: #f1f5f9; }
+html[data-theme="escuro"] .guia-intro p,
+html[data-theme="escuro"] .guia-section-heading p,
+html[data-theme="escuro"] .guia-body-copy,
+html[data-theme="escuro"] .guia-senso-card p,
+html[data-theme="escuro"] .guia-how-step p,
+html[data-theme="escuro"] .guia-color-notes p,
+html[data-theme="escuro"] .guia-muted-note { color: #cbd5e1; }
+html[data-theme="escuro"] .guia-facts div,
+html[data-theme="escuro"] .guia-example-table th,
+html[data-theme="escuro"] .guia-total-row { background: #263449; border-color: #475569; }
+html[data-theme="escuro"] .guia-facts strong,
+html[data-theme="escuro"] .guia-nota b,
+html[data-theme="escuro"] .guia-nota strong { color: #f8fafc; }
+html[data-theme="escuro"] .guia-nota { background: #1e2d42; border-color: #475569; }
+html[data-theme="escuro"] .guia-nota small { color: #cbd5e1; }
+html[data-theme="escuro"] .guia-callout { background: #1e3552; color: #bfdbfe; }
+html[data-theme="escuro"] .guia-callout-warning { background: #493a1b; color: #fde68a; }
+html[data-theme="escuro"] .guia-example-result { background: #153b32; border-color: #23634e; }
+html[data-theme="escuro"] .guia-example-result small,
+html[data-theme="escuro"] .guia-example-result p { color: #bbf7d0; }
+html[data-theme="escuro"] .guia-example-result strong { color: #4ade80; }
+html[data-theme="escuro"] .guia-formula { background: #0b1930; border: 1px solid #334155; }
+html[data-theme="escuro"] .guia-final-card { background: linear-gradient(110deg, #0b1930, #142d4e); }
+
+
+/* Ajustes finais de contraste para o tema escuro */
+html[data-theme="escuro"] #informacoesSetor,
+html[data-theme="escuro"] .info-setor-card {
+  background: #22334b !important;
+  border: 1px solid #40536d;
+  color: #e5edf7;
+}
+html[data-theme="escuro"] #informacoesSetor strong,
+html[data-theme="escuro"] .info-setor-card strong {
+  color: #f1f5f9;
+}
+html[data-theme="escuro"] #informacoesSetor p,
+html[data-theme="escuro"] .info-setor-card p {
+  color: #bdcbe0 !important;
+}
+
+
+/* Identidade visual do dashboard no tema escuro:
+   mantém os círculos institucionais amarelo e azul visíveis, porém discretos. */
+html[data-theme="escuro"] .main-content::before {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+  opacity: 0.14 !important;
+  z-index: 0;
+  pointer-events: none;
+}
+html[data-theme="escuro"] .main-content::after {
+  background: #2563eb !important;
+  opacity: 0.20 !important;
+  z-index: 0;
+  pointer-events: none;
+}
+html[data-theme="escuro"] .main-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* Cartões translúcidos no tema escuro para revelar suavemente as formas decorativas do fundo. */
+html[data-theme="escuro"] .card,
+html[data-theme="escuro"] .stat-card,
+html[data-theme="escuro"] .dashboard-card,
+html[data-theme="escuro"] .management-kpi,
+html[data-theme="escuro"] .management-filters,
+html[data-theme="escuro"] .management-plan,
+html[data-theme="escuro"] .user-row,
+html[data-theme="escuro"] .users-kpis .card {
+  background: rgba(24, 36, 55, 0.80) !important;
+  border-color: rgba(100, 116, 139, 0.42);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+
+/* Transparência consistente em cartões de todas as páginas internas no tema escuro. */
+html[data-theme="escuro"] .main-content .card,
+html[data-theme="escuro"] .main-content [class*="-card"],
+html[data-theme="escuro"] .main-content .management-plan,
+html[data-theme="escuro"] .main-content .management-kpi,
+html[data-theme="escuro"] .main-content .management-filters,
+html[data-theme="escuro"] .main-content .user-row {
+  background-color: rgba(24, 36, 55, 0.80) !important;
+  border-color: rgba(100, 116, 139, 0.42);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* O menu de notificações fica sempre acima dos cartões e permanece opaco. */
+html[data-theme="escuro"] .topbar {
+  position: relative;
+  z-index: 1000 !important;
+  overflow: visible;
+}
+html[data-theme="escuro"] .topbar-actions,
+html[data-theme="escuro"] .notification-wrap {
+  position: relative;
+  z-index: 1100 !important;
+}
+html[data-theme="escuro"] .notification-panel {
+  position: absolute;
+  z-index: 3000 !important;
+  background: #182437 !important;
+  opacity: 1 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+}
+html[data-theme="escuro"] .notification-panel * {
+  opacity: 1;
+}
+
+
+/* Correção definitiva do painel de notificações: fora do fluxo dos cartões e acima de todo o conteúdo. */
+html[data-theme="escuro"] .main-content {
+  overflow: visible !important;
+}
+html[data-theme="escuro"] .topbar,
+html[data-theme="escuro"] .topbar-actions,
+html[data-theme="escuro"] .notification-wrap {
+  position: relative;
+  z-index: 10000 !important;
+  overflow: visible !important;
+}
+html[data-theme="escuro"] .notification-panel {
+  position: fixed !important;
+  top: 96px !important;
+  right: 32px !important;
+  z-index: 2147483000 !important;
+  width: min(360px, calc(100vw - 24px));
+  background-color: #182437 !important;
+  color: #e5edf7 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  isolation: isolate;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.62) !important;
+}
+html[data-theme="escuro"] .notification-panel,
+html[data-theme="escuro"] .notification-panel * {
+  text-shadow: none;
+}
+html[data-theme="escuro"] .notification-panel[hidden] {
+  display: none !important;
+}
+@media (max-width: 650px) {
+  html[data-theme="escuro"] .notification-panel {
+    top: 88px !important;
+    right: 12px !important;
+  }
+}
+
+
+/* O painel é movido diretamente para o body no tema escuro (portal JS),
+   evitando que cartões ou contêineres criem camadas acima dele. */
+html[data-theme="escuro"] body > .notification-panel {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  background: #182437 !important;
+  color: #e5edf7 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  isolation: isolate;
+  box-shadow: 0 18px 45px rgba(0,0,0,.62) !important;
+}
+html[data-theme="escuro"] body > .notification-panel * {
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+
+/* Padronização institucional: ações da equipe usam amarelo Sensus em qualquer tema. */
+.user-actions button,
+.user-actions .btn-outline,
+.user-actions .user-deactivate {
+  background: #ffbf00 !important;
+  color: #10213b !important;
+  border: 1px solid #ffbf00 !important;
+  font-weight: 700;
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.user-actions button:hover,
+.user-actions .btn-outline:hover,
+.user-actions .user-deactivate:hover {
+  background: #f2ad00 !important;
+  color: #10213b !important;
+  border-color: #f2ad00 !important;
+  transform: translateY(-1px);
+}
+.user-actions button:focus-visible {
+  outline: 3px solid rgba(255, 191, 0, .35);
+  outline-offset: 2px;
+}

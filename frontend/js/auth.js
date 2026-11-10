@@ -95,3 +95,21 @@ $('resetCard')?.addEventListener('submit', async (e) => {
 const emailSalvo = localStorage.getItem('sensus_email_salvo');
 if (emailSalvo) { $('userInput').value = emailSalvo; $('rememberMe').checked = true; }
 if (new URLSearchParams(window.location.search).has('token')) mostrar('reset');
+
+
+// Alterna a visibilidade dos campos de senha sem alterar o valor digitado.
+document.addEventListener('click', (event) => {
+  const botao = event.target.closest('[data-password-toggle]');
+  if (!botao) return;
+  const campo = document.getElementById(botao.dataset.passwordToggle);
+  if (!campo) return;
+  const mostrarSenha = campo.type === 'password';
+  campo.type = mostrarSenha ? 'text' : 'password';
+  botao.setAttribute('aria-label', mostrarSenha ? 'Ocultar senha' : 'Mostrar senha');
+  botao.setAttribute('aria-pressed', String(mostrarSenha));
+  const icone = botao.querySelector('i');
+  if (icone) {
+    icone.classList.toggle('icon-eye', !mostrarSenha);
+    icone.classList.toggle('icon-eye-off', mostrarSenha);
+  }
+});

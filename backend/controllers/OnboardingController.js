@@ -10,7 +10,7 @@ async function atualizar(req, res) {
   if (!['pendente', 'adiado', 'concluido'].includes(status)) {
     return res.status(400).json({ erro: 'Status de configuração inválido.' });
   }
-  if (!Number.isInteger(etapa) || etapa < 1 || etapa > 5) {
+  if (!Number.isInteger(etapa) || etapa < 1 || etapa > 6) {
     return res.status(400).json({ erro: 'Etapa inválida.' });
   }
   return res.json(await OnboardingModel.atualizar(req.usuario.empresa_id, { status, etapa_atual: etapa }));

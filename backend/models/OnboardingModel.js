@@ -18,7 +18,7 @@ async function buscar(empresaId) {
 async function atualizar(empresaId, dados) {
   const status = ['pendente', 'adiado', 'concluido'].includes(dados.status)
     ? dados.status : 'pendente';
-  const etapa = Math.min(5, Math.max(1, Number(dados.etapa_atual) || 1));
+  const etapa = Math.min(6, Math.max(1, Number(dados.etapa_atual) || 1));
   await db.query(
     `INSERT INTO onboarding_empresa (empresa_id, status, etapa_atual, pulado_em, concluido_em)
      VALUES (?, ?, ?, IF(? = 'adiado', NOW(), NULL), IF(? = 'concluido', NOW(), NULL))

@@ -74,6 +74,11 @@ async function verificarPrimeiroAcesso() {
 }
 
 async function carregarDashboard() {
+  const temaEscuro = document.documentElement.dataset.theme === 'escuro';
+  if (window.Chart) {
+    Chart.defaults.color = temaEscuro ? '#cbd5e1' : '#64748b';
+    Chart.defaults.borderColor = temaEscuro ? 'rgba(148,163,184,.22)' : 'rgba(100,116,139,.18)';
+  }
   const token = obterToken();
 
   if (!token) {
@@ -190,7 +195,7 @@ function renderizarEvolucao(evolucao = []) {
             borderColor: (ctx) => corDesempenho((Number(ctx.p0.parsed.y) + Number(ctx.p1.parsed.y)) / 2)
           },
           pointBackgroundColor: (ctx) => corDesempenho(ctx.parsed.y),
-          pointBorderColor: '#ffffff',
+          pointBorderColor: document.documentElement.dataset.theme === 'escuro' ? '#182437' : '#ffffff',
           pointBorderWidth: 2,
         },
       ],
@@ -297,8 +302,10 @@ function renderizarRadar(porSenso = []) {
           data: porSenso.map((item) => Number(item.media || 0)),
           borderWidth: 2,
           fill: true,
-          borderColor: '#0b2a52',
-          backgroundColor: 'rgba(11, 42, 82, 0.10)',
+          borderColor: document.documentElement.dataset.theme === 'escuro' ? '#fbbf24' : '#0b2a52',
+          backgroundColor: document.documentElement.dataset.theme === 'escuro'
+            ? 'rgba(251, 191, 36, 0.16)'
+            : 'rgba(11, 42, 82, 0.10)',
           pointBackgroundColor: porSenso.map(item => corDesempenho(item.media)),
           pointBorderColor: '#ffffff',
         },
@@ -311,8 +318,14 @@ function renderizarRadar(porSenso = []) {
         r: {
           beginAtZero: true,
           max: 100,
+          angleLines: { color: document.documentElement.dataset.theme === 'escuro' ? 'rgba(148,163,184,.62)' : 'rgba(100,116,139,.18)' },
+          grid: { color: document.documentElement.dataset.theme === 'escuro' ? 'rgba(148,163,184,.58)' : 'rgba(100,116,139,.18)' },
+          pointLabels: { color: document.documentElement.dataset.theme === 'escuro' ? '#cbd5e1' : '#64748b', font: { weight: '600' } },
           ticks: {
             stepSize: 20,
+            color: document.documentElement.dataset.theme === 'escuro' ? '#cbd5e1' : '#64748b',
+            backdropColor: 'transparent',
+            showLabelBackdrop: false,
           },
         },
       },
@@ -395,6 +408,7 @@ function renderizarPlanos(planos = []) {
       plugins: {
         legend: {
           position: 'bottom',
+          labels: { color: document.documentElement.dataset.theme === 'escuro' ? '#cbd5e1' : '#64748b' },
         },
       },
     },
@@ -462,5 +476,42 @@ function preencherDiagnostico(dados) {
   status.textContent = classificacao.texto;
   status.className = classificacao.classe;
 }
+
+
+function atualizarCoresGraficos() {
+  if (!window.Chart) return;
+  const escuro = document.documentElement.dataset.theme === 'escuro';
+  const texto = escuro ? '#cbd5e1' : '#64748b';
+  const grade = escuro ? 'rgba(148,163,184,.22)' : 'rgba(100,116,139,.18)';
+  Chart.defaults.color = texto;
+  Chart.defaults.borderColor = grade;
+  [graficoEvolucao, graficoSensos, graficoRadar, graficoPlanos].filter(Boolean).forEach(grafico => {
+    if (grafico.options.scales) {
+      Object.values(grafico.options.scales).forEach(eixo => {
+        if (eixo.ticks) eixo.ticks.color = texto;
+        if (eixo.grid) eixo.grid.color = grade;
+        if (eixo.pointLabels) eixo.pointLabels.color = texto;
+        if (eixo.angleLines) eixo.angleLines.color = grade;
+        if (eixo.ticks && grafico.config.type === 'radar') {
+          eixo.ticks.backdropColor = 'transparent';
+          eixo.ticks.showLabelBackdrop = false;
+        }
+      });
+    }
+    if (grafico.options.plugins?.legend?.labels) grafico.options.plugins.legend.labels.color = texto;
+
+    // Mantém a identidade visual do radar ao alternar entre os temas.
+    if (grafico === graficoRadar && grafico.data.datasets[0]) {
+      grafico.data.datasets[0].borderColor = escuro ? '#fbbf24' : '#0b2a52';
+      grafico.data.datasets[0].backgroundColor = escuro
+        ? 'rgba(251, 191, 36, 0.16)'
+        : 'rgba(11, 42, 82, 0.10)';
+      grafico.data.datasets[0].pointBorderColor = escuro ? '#182437' : '#ffffff';
+    }
+
+    grafico.update('none');
+  });
+}
+window.addEventListener('sensus:tema-alterado', atualizarCoresGraficos);
 
 document.addEventListener('DOMContentLoaded', carregarDashboard);

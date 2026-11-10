@@ -101,4 +101,20 @@ const api = {
   dashboardResumo() {
     return this.request('/dashboard/resumo');
   },
+
+  relatoriosOpcoes() {
+    return this.request('/relatorios/opcoes');
+  },
+
+  gerarRelatorio(params) {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/relatorios?${query}`);
+  },
+
+  enviarRelatorio(payload) {
+    return this.request('/relatorios/enviar', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };

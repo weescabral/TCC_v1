@@ -207,7 +207,9 @@ async function restaurarAuditoriaEmAndamento() {
     return true;
   } catch (erro) {
     console.warn('Não foi possível restaurar a auditoria em andamento:', erro);
-    limparEstadoAuditoria();
+    // Falhas transitórias de rede/API não devem apagar o snapshot local.
+    // O usuário poderá tentar restaurar novamente sem perder o progresso.
+    mostrarMensagem('Não foi possível recuperar a auditoria neste momento. Seu progresso local foi preservado. Verifique a conexão e tente novamente.', 'erro');
     return false;
   }
 }
@@ -800,6 +802,10 @@ async function salvarEtapaAtual(evento) {
     mostrarMensagem(erro.message);
     return;
   }
+
+  // Persiste respostas e etapa no navegador antes de iniciar operações de rede.
+  // Se a conexão cair durante o salvamento/upload, o snapshot mais recente permanece disponível.
+  salvarEstadoAuditoria();
 
   estado.salvandoEtapa = true;
   mostrarCarregamento();

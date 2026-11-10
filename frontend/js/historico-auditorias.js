@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = window.SENSUS_API_URL || 'http://localhost:3000/api';
+const API_ORIGIN = new URL(API_URL, window.location.href).origin;
 let auditoriasCache = [];
 const detalhesAbertos = new Set();
 
@@ -12,6 +13,7 @@ async function api(endpoint) {
 function esc(v='') { return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
 function dataBR(v) { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? esc(v) : d.toLocaleDateString('pt-BR'); }
 function percentual(v) { const n = Number(v); return Number.isFinite(n) ? `${n.toLocaleString('pt-BR',{maximumFractionDigits:1})}%` : '—'; }
+function classePercentual(v) { const n=Number(v||0); return n<50?'performance-critical':n<70?'performance-low':n<85?'performance-medium':'performance-good'; }
 function statusLabel(v) { return v === 'finalizada' ? 'Finalizada' : v === 'em_andamento' ? 'Em andamento' : (v || 'Não informado'); }
 function textoTipo(v) { return v === 'extraordinaria' ? 'Extraordinária' : 'Periódica'; }
 function filtrar() {
@@ -32,7 +34,7 @@ function renderizar(lista) {
         <div><h3>${esc(a.setor_nome || 'Setor não identificado')}</h3>
           <div class="history-meta"><span><strong>Código:</strong> ${esc(a.codigo || `AUD-${a.id}`)}</span><span><strong>Data:</strong> ${dataBR(a.data_auditoria)}</span><span><strong>Auditor:</strong> ${esc(a.auditor_nome || 'Não informado')}</span><span><strong>Tipo:</strong> ${textoTipo(a.tipo)}</span></div>
         </div>
-        <div style="text-align:right"><span class="history-badge ${esc(a.status)}">${esc(statusLabel(a.status))}</span><h2 style="margin-top:8px">${percentual(a.percentual_geral)}</h2><small>${esc(a.classificacao || 'Sem classificação')}</small></div>
+        <div style="text-align:right"><span class="history-badge ${esc(a.status)}">${esc(statusLabel(a.status))}</span><h2 class="${classePercentual(a.percentual_geral)}" style="margin-top:8px">${percentual(a.percentual_geral)}</h2><small>${esc(a.classificacao || 'Sem classificação')}</small></div>
       </div>
       ${a.motivo_extraordinaria ? `<p style="margin-top:12px"><strong>Motivo da auditoria extraordinária:</strong> ${esc(a.motivo_extraordinaria)}</p>` : ''}
       <div class="history-actions"><button class="btn-primary" type="button" onclick="alternarDetalhe(${Number(a.id)})">${detalhesAbertos.has(Number(a.id)) ? 'Ocultar detalhes' : 'Ver respostas e evidências'}</button></div>
@@ -53,9 +55,33 @@ async function carregarDetalhe(id, mostrarErro=true) {
     const respostas = a.respostas || [];
     const evidencias = a.evidencias || [];
     const planos = a.planos_acao || [];
-    const evidenciasHtml = resposta => (resposta.evidencias || evidencias.filter(e => Number(e.resposta_id) === Number(resposta.id))).map(e => `<li>${esc(e.nome_original || e.nome_arquivo || 'Evidência')} ${e.descricao ? `— ${esc(e.descricao)}` : ''}</li>`).join('');
+    const urlEvidencia = (e) => {
+      // Novas evidências usam URL absoluta do Cloudinary. Registros antigos
+      // podem conter caminhos locais em formatos diferentes.
+      const caminho = String(e.caminho || e.url || '').trim();
+      if (/^https?:\/\//i.test(caminho)) return caminho;
+
+      let relativo = caminho.replace(/\\/g, '/').replace(/^\.\//, '');
+      relativo = relativo.replace(/^.*?backend\//i, '');
+      if (relativo.startsWith('/uploads/')) return `${API_ORIGIN}${relativo}`;
+      if (relativo.startsWith('uploads/')) return `${API_ORIGIN}/${relativo}`;
+      if (relativo.startsWith('evidencias/')) return `${API_ORIGIN}/uploads/${relativo}`;
+      if (relativo && !relativo.includes('://')) {
+        const nome = relativo.split('/').pop();
+        if (nome) return `${API_ORIGIN}/uploads/evidencias/${encodeURIComponent(nome)}`;
+      }
+
+      const nomeArquivo = String(e.nome_arquivo || '').replace(/\\/g, '/').split('/').pop();
+      if (nomeArquivo && !nomeArquivo.includes('.')) return '';
+      return nomeArquivo ? `${API_ORIGIN}/uploads/evidencias/${encodeURIComponent(nomeArquivo)}` : '';
+    };
+    const evidenciasHtml = resposta => (resposta.evidencias || evidencias.filter(e => Number(e.resposta_id) === Number(resposta.id))).map(e => {
+      const url = urlEvidencia(e);
+      const legenda = e.descricao ? ` — ${esc(e.descricao)}` : '';
+      return `<li class="history-evidence-item"><div class="history-evidence-info"><span>${esc(e.nome_original || e.nome_arquivo || 'Evidência')}${legenda}</span></div><div class="history-evidence-action"><button class="history-photo-button" type="button" data-evidence-url="${esc(url)}" data-evidence-title="${esc(e.nome_original || 'Evidência')}" ${url ? '' : 'disabled'}><i class="icon icon-camera" aria-hidden="true"></i> Ver foto</button></div></li>`;
+    }).join('');
     alvo.innerHTML = `
-      <div class="history-sensos">${sensos.map(s => `<div class="history-senso"><small>${esc(s.codigo || s.nome)}</small><h3>${percentual(s.percentual)}</h3><small>${esc(s.classificacao || '')}</small></div>`).join('') || '<p>Resultados por senso não disponíveis.</p>'}</div>
+      <div class="history-sensos">${sensos.map(s => `<div class="history-senso"><small>${esc(s.codigo || s.nome)}</small><h3 class="${classePercentual(s.percentual)}">${percentual(s.percentual)}</h3><small>${esc(s.classificacao || '')}</small></div>`).join('') || '<p>Resultados por senso não disponíveis.</p>'}</div>
       <p><strong>Observação geral:</strong> ${esc(a.observacao_geral || 'Nenhuma observação registrada.')}</p>
       ${a.prazo ? `<p style="margin-top:6px"><strong>Prazo:</strong> ${dataBR(a.prazo)}</p>` : ''}
       <h3 style="margin-top:18px">Respostas por critério (${respostas.length})</h3>
@@ -65,6 +91,40 @@ async function carregarDetalhe(id, mostrarErro=true) {
       <div class="history-meta"><span><strong>Iniciada:</strong> ${dataBR(a.iniciada_em || a.data_auditoria)}</span><span><strong>Finalizada:</strong> ${dataBR(a.finalizada_em)}</span><span><strong>Duração:</strong> ${a.duracao_segundos != null ? `${Math.floor(Number(a.duracao_segundos)/60)} min` : '—'}</span></div>`;
   } catch (e) { alvo.innerHTML = `<p style="color:#b91c1c">${esc(e.message)}</p>`; if (mostrarErro) console.error(e); }
 }
+function visualizarEvidencia(urlCodificada, titulo = 'Evidência') {
+  const url = decodeURIComponent(urlCodificada);
+  let modal = document.getElementById('historyPhotoModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'historyPhotoModal';
+    modal.className = 'history-photo-modal';
+    modal.innerHTML = `<div class="history-photo-dialog" role="dialog" aria-modal="true" aria-labelledby="historyPhotoTitle"><div class="history-photo-header"><h3 id="historyPhotoTitle">Evidência</h3><button type="button" class="history-photo-close" aria-label="Fechar" onclick="fecharEvidencia()">&times;</button></div><div class="history-photo-content"><img id="historyPhotoImage" alt="Foto de evidência"><p id="historyPhotoError" hidden>Não foi possível carregar esta imagem. O arquivo pode ter sido removido do servidor ou o caminho salvo na auditoria antiga não está mais disponível.</p></div><div class="history-photo-footer"><button type="button" class="btn-secondary" onclick="fecharEvidencia()">Fechar</button><a id="historyPhotoOpen" class="history-photo-open" target="_blank" rel="noopener">Abrir em nova aba</a></div></div>`;
+    modal.addEventListener('click', (event) => { if (event.target === modal) fecharEvidencia(); });
+    document.body.appendChild(modal);
+  }
+  const img = document.getElementById('historyPhotoImage');
+  const erro = document.getElementById('historyPhotoError');
+  document.getElementById('historyPhotoTitle').textContent = titulo || 'Evidência';
+  erro.hidden = true;
+  img.hidden = false;
+  img.onload = () => { img.hidden = false; erro.hidden = true; };
+  img.onerror = () => { img.hidden = true; erro.hidden = false; };
+  img.src = url;
+  document.getElementById('historyPhotoOpen').href = url;
+  modal.classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+}
+function fecharEvidencia() {
+  const modal = document.getElementById('historyPhotoModal');
+  if (modal) modal.classList.remove('is-open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') fecharEvidencia(); });
+document.addEventListener('click', (event) => {
+  const botao = event.target.closest('[data-evidence-url]');
+  if (botao && !botao.disabled) visualizarEvidencia(encodeURIComponent(botao.dataset.evidenceUrl), botao.dataset.evidenceTitle);
+});
+
 document.getElementById('buscaHistorico').addEventListener('input', filtrar);
 document.getElementById('filtroHistoricoStatus').addEventListener('change', filtrar);
 (async function inicializar() {

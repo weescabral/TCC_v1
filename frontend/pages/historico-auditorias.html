@@ -19,6 +19,26 @@
     .history-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
     .btn-secondary{border:1px solid #cbd5e1;background:#fff;color:#334155;padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:600}
     .history-empty{padding:28px;text-align:center;color:#64748b}
+
+    .history-evidence-item{list-style:none;margin:10px 0 14px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px}
+    .history-evidence-info{color:#475569;line-height:1.45}
+    .history-evidence-action{display:flex;justify-content:flex-end;margin-top:10px}
+    .history-photo-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:124px;padding:10px 17px;border:0;border-radius:9px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-size:.92rem;font-weight:700;box-shadow:0 3px 8px rgba(37,99,235,.22);cursor:pointer;transition:transform .15s,box-shadow .15s,background .15s}
+    .history-photo-button:hover{background:linear-gradient(135deg,#1d4ed8,#1e40af);transform:translateY(-1px);box-shadow:0 5px 12px rgba(37,99,235,.28)}
+    .history-photo-button:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+    .history-photo-button i{font-size:1.05rem}
+    .history-photo-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.78);padding:24px;align-items:center;justify-content:center}
+    .history-photo-modal.is-open{display:flex}
+    .history-photo-dialog{width:min(900px,100%);max-height:92vh;display:flex;flex-direction:column;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.3)}
+    .history-photo-header,.history-photo-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid #e2e8f0}
+    .history-photo-header h3{margin:0;font-size:1.05rem;color:#0f172a}
+    .history-photo-close{border:0;background:#f1f5f9;color:#334155;border-radius:8px;width:36px;height:36px;font-size:25px;line-height:1;cursor:pointer}
+    .history-photo-content{padding:16px;overflow:auto;text-align:center;background:#f8fafc}
+    .history-photo-content img{max-width:100%;max-height:68vh;object-fit:contain;border-radius:8px}
+    .history-photo-content p{color:#b91c1c;padding:24px}
+    .history-photo-footer{border-top:1px solid #e2e8f0;border-bottom:0;justify-content:flex-end}
+    .history-photo-open{display:inline-flex;padding:9px 14px;border-radius:8px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700}
+    @media(max-width:650px){.history-photo-modal{padding:10px}.history-photo-dialog{max-height:96vh}.history-photo-content img{max-height:65vh}}
     @media(max-width:650px){.history-toolbar{grid-template-columns:1fr}}
   </style>
 </head>
@@ -42,6 +62,6 @@
   <script src="../js/components.js"></script>
   <script>renderSidebar("historico"); renderTopbar("Histórico de Auditorias", "Consulte auditorias anteriores e acompanhe os resultados por setor.");</script>
   <script src="../js/protegerPagina.js?v=3"></script>
-  <script src="../js/historico-auditorias.js?v=3"></script>
+  <script src="../js/historico-auditorias.js?v=4"></script>
 </body>
 </html>

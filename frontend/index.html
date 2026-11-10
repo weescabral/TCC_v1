@@ -13,14 +13,14 @@
 
   <header class="header">
     <div class="logo">
-      <div class="logo-icon">⬡</div>
+      <div class="logo-icon login-logo-icon" aria-hidden="true">⬡</div>
       <span>SENSUS</span>
     </div>
 
     <nav>
-      <a href="#">Recursos</a>
-      <a href="#">Planos</a>
-      <a href="#">Suporte</a>
+      <a href="#" class="coming-soon-link" data-tooltip="Disponível em breve" aria-label="Recursos — disponível em breve">Recursos</a>
+      <a href="#" class="coming-soon-link" data-tooltip="Disponível em breve" aria-label="Planos — disponível em breve">Planos</a>
+      <a href="mailto:sensusgestao@gmail.com" id="supportLink" title="Enviar e-mail para sensusgestao@gmail.com">Suporte</a>
     </nav>
 
     <button class="btn-header" type="button">
@@ -104,7 +104,6 @@
           <input
           id="userInput"
           type="email"
-          value="admin@sensus.com"
           autocomplete="email"
           required/>
         </div>
@@ -116,10 +115,9 @@
           <input
           id="passInput"
           type="password"
-          value="123456"
           autocomplete="current-password"
           required/>
-          <i class="icon-eye eye"></i>
+          <button class="password-toggle" type="button" data-password-toggle="passInput" aria-label="Mostrar senha" aria-pressed="false"><i class="icon-eye"></i></button>
         </div>
 
         <div class="options">
@@ -140,8 +138,8 @@
         <label for="companyName">Nome da empresa</label><div class="input-box"><i class="icon-building-2"></i><input id="companyName" required maxlength="150" autocomplete="organization" placeholder="Sua empresa" /></div>
         <label for="registerName">Seu nome</label><div class="input-box"><i class="icon-user"></i><input id="registerName" required maxlength="100" autocomplete="name" placeholder="Nome do responsável" /></div>
         <label for="registerEmail">E-mail</label><div class="input-box"><i class="icon-mail"></i><input id="registerEmail" type="email" required autocomplete="email" placeholder="nome@empresa.com" /></div>
-        <label for="registerPassword">Senha (mínimo 8 caracteres)</label><div class="input-box"><i class="icon-lock"></i><input id="registerPassword" type="password" minlength="8" required autocomplete="new-password" /></div>
-        <label for="registerConfirm">Confirmar senha</label><div class="input-box"><i class="icon-lock"></i><input id="registerConfirm" type="password" minlength="8" required autocomplete="new-password" /></div>
+        <label for="registerPassword">Senha (mínimo 8 caracteres)</label><div class="input-box"><i class="icon-lock"></i><input id="registerPassword" type="password" minlength="8" required autocomplete="new-password" /><button class="password-toggle" type="button" data-password-toggle="registerPassword" aria-label="Mostrar senha" aria-pressed="false"><i class="icon-eye"></i></button></div>
+        <label for="registerConfirm">Confirmar senha</label><div class="input-box"><i class="icon-lock"></i><input id="registerConfirm" type="password" minlength="8" required autocomplete="new-password" /><button class="password-toggle" type="button" data-password-toggle="registerConfirm" aria-label="Mostrar senha" aria-pressed="false"><i class="icon-eye"></i></button></div>
         <button type="submit" class="btn-login">Criar conta <i class="icon-arrow-right"></i></button>
         <p class="switch-auth">Já possui uma conta? <a href="#" id="showLogin">Voltar ao login</a></p>
       </form>
@@ -155,8 +153,8 @@
 
       <form class="login-card auth-extra" id="resetCard" hidden>
         <h2>Definir nova senha</h2><p>Escolha uma senha nova com pelo menos 8 caracteres.</p>
-        <label for="resetPassword">Nova senha</label><div class="input-box"><i class="icon-lock"></i><input id="resetPassword" type="password" minlength="8" required autocomplete="new-password" /></div>
-        <label for="resetConfirm">Confirmar nova senha</label><div class="input-box"><i class="icon-lock"></i><input id="resetConfirm" type="password" minlength="8" required autocomplete="new-password" /></div>
+        <label for="resetPassword">Nova senha</label><div class="input-box"><i class="icon-lock"></i><input id="resetPassword" type="password" minlength="8" required autocomplete="new-password" /><button class="password-toggle" type="button" data-password-toggle="resetPassword" aria-label="Mostrar senha" aria-pressed="false"><i class="icon-eye"></i></button></div>
+        <label for="resetConfirm">Confirmar nova senha</label><div class="input-box"><i class="icon-lock"></i><input id="resetConfirm" type="password" minlength="8" required autocomplete="new-password" /><button class="password-toggle" type="button" data-password-toggle="resetConfirm" aria-label="Mostrar senha" aria-pressed="false"><i class="icon-eye"></i></button></div>
         <button type="submit" class="btn-login">Salvar nova senha</button>
       </form>
       <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
@@ -164,16 +162,9 @@
   </main>
 
   <footer>
-    <div class="footer-logo">
-      <div class="logo-icon small-logo">⬡</div>
-      <p>© 2025 Sensus. Todos os direitos reservados.</p>
-    </div>
+    <div class="footer-logo"><p>© 2026 Sensus 5S. Todos os direitos reservados.</p></div>
 
-    <div class="footer-links">
-      <a href="#">Privacidade</a>
-      <a href="#">Termos de uso</a>
-      <a href="#">Contato</a>
-    </div>
+
   </footer>
 
   <script src="./js/auth.js"></script>

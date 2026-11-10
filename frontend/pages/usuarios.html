@@ -24,7 +24,7 @@
           <label>Nome completo<input class="form-control" id="userName" maxlength="100" required placeholder="Nome do usuário"></label>
           <label>E-mail<input class="form-control" id="userEmail" type="email" maxlength="150" required placeholder="usuario@empresa.com"></label>
           <label>Perfil<select class="form-control" id="userRole"><option value="auditor">Auditor</option><option value="administrador">Administrador</option></select></label>
-          <label id="userPasswordWrap">Senha inicial<input class="form-control" id="userPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>
+          <label id="userPasswordWrap">Senha inicial<div class="user-password-field"><input class="form-control" id="userPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"><button class="password-toggle" type="button" data-password-toggle="userPassword" aria-label="Mostrar senha" aria-pressed="false"><i class="icon-eye"></i></button></div></label>
           <div class="users-form-actions"><button class="btn-primary" id="userSave" type="submit">Cadastrar usuário</button><button class="btn-outline" id="userCancel" type="button" hidden>Cancelar</button></div>
           <p class="users-feedback" id="userFeedback" role="status"></p>
         </form>
@@ -34,7 +34,6 @@
         <div id="usersList" class="users-list"><p class="empty-state">Carregando usuários...</p></div>
       </article>
     </section>
-    <p class="footer-text">© 2026 Sensus 5S • Gestão de usuários</p>
   </main></div>
   <script src="../js/components.js"></script><script>renderSidebar('usuarios');renderTopbar('Usuários','Gerencie os acessos e as permissões da sua equipe.');</script>
   <script src="../js/usuarios.js"></script>

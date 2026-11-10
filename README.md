@@ -1,113 +1,371 @@
-# 📊 Sensus 5S — Plataforma de Monitoramento & Avaliação
+# 📊 Sensus 5S — Sistema Inteligente de Gestão e Auditoria 5S
 
-> **TCC** > Sistema Full-Stack para otimização, auditoria e mapeamento de conformidade baseado na metodologia ágil japonesa 5S.
+**Plataforma web para gestão organizacional, auditoria, monitoramento de desempenho e melhoria contínua baseada na metodologia japonesa 5S.**
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Em%20desenvolvimento-FFC107?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=node.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
+  <img src="https://img.shields.io/badge/JavaScript-Frontend-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" />
+</p>
 
 ---
 
 ## 📌 Sobre o Projeto
 
-O **Sensus 5S** é uma plataforma desenvolvida para gerenciar ciclos de auditorias em ambientes organizacionais. O sistema permite o mapeamento de setores físicos, a aplicação de checklists dinâmicos para os 5 sensos (*Seiri, Seiton, Seiso, Seiketsu, Shitsuke*) e a visualização analítica do rendimento histórico através de gráficos de tendência suaves.
+O **Sensus 5S** é um sistema web desenvolvido com o objetivo de digitalizar, automatizar e otimizar a gestão de auditorias organizacionais fundamentadas na metodologia japonesa 5S.
 
-### 🚀 Principais Funcionalidades
-* **Painel Geral (Dashboard):** Gráfico de linha dinâmico que plota a tendência de desempenho e o índice de aderência acumulado das auditorias.
-* **Checklist Inteligente:** Avaliação em tempo real com cálculo automatizado de pontuação e classificação de status do ambiente.
-* **Gestão de Setores:** Cadastro, listagem e remoção de áreas físicas integrados ao banco de dados relacional.
-* **Plano de Ação:** Geração de tarefas corretivas instantâneas baseadas nos alertas de desvios críticos do ambiente.
+A plataforma substitui processos manuais e planilhas descentralizadas por um ambiente integrado, permitindo o cadastro de setores, gerenciamento de usuários, aplicação de checklists, registro de evidências, acompanhamento de indicadores e elaboração de planos de ação.
+
+Além da realização das auditorias, o sistema oferece recursos de análise gerencial, histórico de desempenho e geração de relatórios em PDF, contribuindo para a tomada de decisões e para a melhoria contínua dos processos organizacionais.
+
+O projeto busca oferecer uma solução acessível, intuitiva e funcional, especialmente para pequenos negócios que desejam implementar e acompanhar a metodologia 5S.
+
+## 🎯 Objetivo
+
+Desenvolver uma plataforma inteligente de gestão comercial e auditoria 5S capaz de centralizar informações organizacionais, mensurar o desempenho dos setores e auxiliar na identificação de oportunidades de melhoria.
+
+## 🏗️ Os cinco sensos da metodologia 5S
+
+A plataforma utiliza os cinco pilares da metodologia japonesa:
+
+| Senso | Significado | Objetivo |
+|---|---|---|
+| **Seiri** | Utilização | Identificar e eliminar o que não é necessário. |
+| **Seiton** | Organização | Organizar materiais e recursos de maneira eficiente. |
+| **Seiso** | Limpeza | Manter ambientes limpos e adequados. |
+| **Seiketsu** | Padronização | Estabelecer padrões para manter os resultados. |
+| **Shitsuke** | Disciplina | Desenvolver hábitos e manter a melhoria contínua. |
 
 ---
 
-## 🏗️ Arquitetura do Sistema
+## 🚀 Principais Funcionalidades
 
-O projeto adota uma arquitetura limpa com total separação de responsabilidades (Decoupled Full-Stack Architecture):
+### 1. Dashboard Executivo
+- Visualização dos principais indicadores organizacionais.
+- Índice geral de desempenho.
+- Média anual das auditorias finalizadas.
+- Cobertura de auditorias por setor.
+- Indicadores de planos de ação pendentes.
+- Identificação dos melhores e menores resultados.
+- Gráficos de evolução histórica e desempenho por senso.
+
+### 2. Gestão de Setores
+- Cadastro, edição e desativação de setores.
+- Identificação padronizada por códigos sequenciais.
+- Associação de auditores responsáveis.
+- Definição de periodicidade das auditorias.
+- Acompanhamento do último resultado de cada setor.
+- Histórico de desempenho.
+
+### 3. Auditoria Inteligente 5S
+- Avaliação dos cinco sensos.
+- Checklist com 10 critérios por senso, totalizando 50 critérios.
+- Escala de avaliação de 1 a 5.
+- Critérios com pesos diferenciados.
+- Cálculo automatizado do desempenho percentual.
+- Registro de observações e evidências fotográficas.
+- Armazenamento de imagens no Cloudinary.
+- Histórico de auditorias e consulta das evidências.
+- Proteção do andamento da auditoria.
+
+### 4. Sistema de Pontuação
+O Sensus 5S utiliza uma metodologia de pontuação ponderada, considerando a nota atribuída a cada critério e seu respectivo peso.
+
+A fórmula utilizada é:
+
+\[
+\text{Desempenho (\%)} =
+\frac{\sum(\text{Nota}\times\text{Peso})}
+{\sum(5\times\text{Peso})}
+\times 100
+\]
+
+A classificação dos resultados segue quatro faixas:
+
+| Desempenho | Classificação visual |
+|---|---|
+| 0% a 49,99% | 🔴 Vermelho |
+| 50% a 69,99% | 🟠 Laranja |
+| 70% a 84,99% | 🟡 Amarelo |
+| 85% a 100% | 🟢 Verde |
+
+### 5. Planos de Ação
+- Geração de planos de ação vinculados aos critérios que necessitam de melhoria.
+- Definição de responsáveis.
+- Registro de prazos.
+- Classificação por prioridade e status.
+- Acompanhamento de ações pendentes, em andamento e concluídas.
+- Organização dos planos em painéis expansíveis e recolhíveis.
+
+### 6. Gestão de Usuários e Permissões
+- Cadastro e gerenciamento de usuários.
+- Perfis de administrador e auditor.
+- Associação de auditores aos setores.
+- Controle de permissões de acesso.
+- Gerenciamento de credenciais.
+- Visualização dos setores atribuídos a cada auditor.
+
+### 7. Histórico de Auditorias
+- Consulta das auditorias realizadas.
+- Identificação por códigos sequenciais no padrão `AUD-AAAA-0001`.
+- Visualização dos resultados e percentuais.
+- Consulta das evidências fotográficas.
+- Acompanhamento das avaliações finalizadas.
+
+### 8. Central de Relatórios e Exportações
+
+O sistema disponibiliza quatro modelos de relatórios:
+
+| Relatório | Descrição |
+|---|---|
+| **Relatório de Auditoria** | Apresenta os resultados detalhados de uma auditoria individual. |
+| **Relatório por Setor** | Reúne o histórico e a evolução do desempenho de um setor. |
+| **Relatório Gerencial** | Apresenta indicadores consolidados e uma visão geral da empresa. |
+| **Relatório Periódico** | Consolida resultados de auditorias em períodos selecionados. |
+
+Recursos disponíveis:
+- Seleção de modelos e filtros.
+- Pré-visualização dos resultados.
+- Exportação de documentos em PDF.
+- Envio de relatórios por e-mail.
+- Controle de acesso conforme o perfil do usuário.
+
+### 9. Notificações
+- Central de notificações do sistema.
+- Avisos relacionados aos planos de ação.
+- Acompanhamento de pendências.
+- Suporte à comunicação de lembretes por e-mail.
+
+### 10. Personalização e Experiência do Usuário
+- Tema claro e tema escuro.
+- Interface responsiva.
+- Padronização visual dos componentes.
+- Navegação intuitiva.
+- Guia de primeiros passos.
+- Área informativa sobre a metodologia 5S e funcionalidades do sistema.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+O projeto adota uma arquitetura Full-Stack desacoplada, separando a interface do usuário, a lógica de negócio e o armazenamento de dados.
+
+### Front-end
+
+| Tecnologia | Aplicação |
+|---|---|
+| HTML5 | Estruturação das páginas. |
+| CSS3 | Estilização e responsividade. |
+| JavaScript ES6+ | Lógica e interatividade. |
+| Chart.js | Visualização de indicadores e gráficos. |
+| Lucide Icons | Ícones da interface. |
+
+### Back-end
+
+| Tecnologia | Aplicação |
+|---|---|
+| Node.js | Ambiente de execução. |
+| Express.js | Construção da API REST. |
+| MySQL2 | Comunicação com o banco de dados. |
+| JWT | Autenticação e autorização. |
+| Bcryptjs | Proteção de senhas. |
+| Nodemailer | Envio de e-mails e relatórios. |
+| Multer | Processamento de uploads de arquivos. |
+| Cloudinary | Armazenamento de evidências fotográficas. |
+| CORS | Controle de requisições entre origens. |
+| Dotenv | Gerenciamento de variáveis de ambiente. |
+
+### Banco de Dados e Infraestrutura
+
+- **MySQL:** armazenamento relacional dos dados.
+- **Railway:** hospedagem do banco de dados e backend.
+- **Cloudinary:** armazenamento e disponibilização de imagens.
+- **Vercel:** hospedagem da interface web.
+
+---
+
+## 🏛️ Arquitetura do Sistema
+
+O projeto utiliza o padrão MVC (Model-View-Controller) no backend, promovendo a separação de responsabilidades e facilitando a manutenção e evolução do código.
 
 ```text
 SENSUSGESTAO/
-├── backend/          # API RESTful em Node.js & Banco Relacional SQLite
-├── frontend/         # Interface do Usuário (HTML5, CSS3 Vanilla, JavaScript ES6)
-└── vercel.json       # Configuração de deploy estático
+│
+├── backend/
+│   ├── config/
+│   ├── controllers/
+│   ├── database/
+│   │   └── migrations/
+│   ├── middlewares/
+│   ├── models/
+│   ├── routes/
+│   ├── uploads/
+│   ├── utils/
+│   ├── .env.example
+│   ├── package.json
+│   └── server.js
+│
+├── frontend/
+│   ├── assets/
+│   ├── css/
+│   ├── js/
+│   ├── pages/
+│   └── index.html
+│
+├── vercel.json
+└── README.md
+```
 
-````
-
-# SensusGestão 📊
-
-O **SensusGestão** é uma plataforma web Full-Stack projetada para digitalizar, monitorar e auditar a aplicação da metodologia 5S (*Seiri, Seiton, Seiso, Seiketsu e Shitsuke*) dentro de ambientes organizacionais. 
-
-O sistema substitui planilhas manuais por uma interface automatizada capaz de centralizar o mapeamento de áreas físicas (setores), coletar avaliações de conformidade de forma ágil e exibir o desempenho histórico através de gráficos dinâmicos.
-
----
-
-## 🛠️ Tecnologias e Arquitetura
-
-O projeto adota uma **Arquitetura Cliente-Servidor Desacoplada**, onde o Front-end e o Back-end comunicam-se de forma assíncrona por meio de uma API RESTful.
-
-### Front-end (Interface)
-- **HTML5 & CSS3:** Estruturação semântica e estilização limpa focada na experiência do usuário (UX).
-- **Vanilla JavaScript (ES6+):** Lógica de comportamento do cliente e consumo da API via `fetch` assíncrono (`async/await`).
-- **Chart.js:** Renderização de gráficos dinâmicos para visualização de dados históricos.
-
-### Back-end (Servidor e API)
-- **Node.js:** Ambiente de execução focado na alta performance de requisições.
-- **Express.js:** Framework minimalista para gerenciamento de rotas e middlewares HTTP.
-- **CORS:** Gerenciamento seguro de requisições de origens cruzadas entre a interface e a API.
-
-### Banco de Dados
-- **SQLite (`sqlite3`):** Banco de dados relacional embarcado localmente. Dispensa servidores complexos, salvando as informações em um arquivo estruturado (`database.db`) e garantindo portabilidade para homologação acadêmica.
+*Estrutura ilustrativa das principais pastas do projeto.*
 
 ---
 
-## 📦 Como Executar o Projeto
+## ⚙️ Como Executar o Projeto Localmente
 
 ### Pré-requisitos
-Antes de começar, você vai precisar ter instalado em sua máquina o [Node.js](https://nodejs.org/) e o [Git](https://git-scm.com/).
 
-### 1. Clonar o Repositório
+Antes de executar o projeto, instale:
+
+- [Node.js](https://nodejs.org/)
+- [Git](https://git-scm.com/)
+- [MySQL](https://www.mysql.com/) ou uma instância MySQL hospedada.
+- Conta no [Cloudinary](https://cloudinary.com/) para armazenamento de imagens.
+
+### 1. Clonar o repositório
+
 ```bash
-git clone [https://github.com/Brendhak/sensus-5s.git](https://github.com/Brendhak/sensus-5s.git)
-cd sensus-5so de API), Cors.Banco de Dados: SQLite (sqlite3 driver assíncrono).Modelagem Conceitual: dbdiagram.io.
-````
+git clone https://github.com/weescabral/TCC_v1.git
 
-### 2. Configurar o Back-endNavegue até a pasta do servidor e instale as dependências:
+cd TCC_v1
+```
+
+### 2. Configurar o backend
+
+```bash
 cd backend
 npm install
+```
 
+### 3. Configurar as variáveis de ambiente
 
-### 3. Executar o ServidorInicie a API Node.js:
+Crie um arquivo `.env` dentro da pasta `backend`, utilizando o `.env.example` como referência.
+
+Exemplo:
+
+```env
+# SERVIDOR
+PORT=3000
+
+# BANCO DE DADOS
+DB_HOST=localhost
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+DB_DATABASE=sensus_db
+DB_PORT=3306
+
+# AUTENTICAÇÃO
+JWT_SECRET=seu_segredo_seguro
+JWT_EXPIRES_IN=8h
+
+# FRONTEND
+FRONTEND_URL=http://localhost:5500
+
+# CLOUDINARY
+CLOUDINARY_CLOUD_NAME=seu_cloud_name
+CLOUDINARY_API_KEY=sua_api_key
+CLOUDINARY_API_SECRET=seu_api_secret
+
+# E-MAIL
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=seu_email
+SMTP_PASS=sua_senha_de_aplicativo
+SMTP_FROM=Sensus 5S <seu_email>
+```
+
+**Importante:** substitua os valores pelos dados reais do seu ambiente. Nunca compartilhe o arquivo `.env` ou publique credenciais no GitHub.
+
+### 4. Executar o backend
+
+Para desenvolvimento:
+
+```bash
+npm run dev
+```
+
+Para execução normal:
+
+```bash
 npm start
-O script do banco de dados irá verificar a existência do arquivo database.db. Caso não exista, ele criará a estrutura de tabelas e carregará os setores padrão automaticamente.
+```
 
+### 5. Executar o frontend
 
-### 4. Executar o Front-end:
-Basta abrir o arquivo frontend/index.html no seu navegador de preferência (ou utilizar a extensão Live Server no VS Code).
+Abra o projeto utilizando uma extensão como Live Server no Visual Studio Code ou configure um servidor HTTP local para servir a pasta `frontend`.
 
-### ⚡ Testando a API de Forma Independente:
-Caso queira testar as rotas da API isoladamente (usando ferramentas como o Thunder Client ou Postman), os principais endpoints configurados são: 
-GET	/api/setores	Lista todos os setores cadastrados no banco
-POST	/api/setores	Cadastra um novo setor
-DELETE	/api/setores/:id	Remove um setor físico e seu histórico pelo ID
-POST	/api/auditorias	Salva uma auditoria 5S e atualiza o Score do setor
-GET	/api/auditorias/ultima	Alimenta o topo do Dashboard com a auditoria mais recente
+A interface deverá estar configurada para consumir a URL da API correspondente ao ambiente utilizado.
 
+---
 
-## ou 
+## 📊 Checklist 5S
 
-Fazendo a utilização da extensão **SQLite Viewer**. Cujo passo a passo para instalar no vscode está abaixo:
-1. **Instalar a Extensão:**
-   - Acesse o menu de **Extensões** no VS Code (`Ctrl + Shift + X`).
-   - Pesquise por **`SQLite Viewer`** (desenvolvido por *qwtel*) e clique em **Instalar**.
+A versão atual utiliza um checklist composto por:
 
-2. **Abrir o Arquivo do Banco:**
-   - No explorador do VS Code, navegue até a pasta `backend/`.
-   - Dê um clique duplo sobre o arquivo **`database.db`**.
-   - A extensão abrirá uma interface gráfica amigável dividida por tabelas.
+- 5 sensos avaliados.
+- 10 critérios por senso.
+- 50 critérios no total.
+- Escala de avaliação de 1 a 5.
+- Pesos diferenciados para os critérios.
 
-3. **Visualizar os Dados:**
-   - No menu esquerdo da extensão, expanda a aba `Tables` e selecione a tabela **`setores`**.
-   - Clique na aba **`DATA`** no topo para visualizar as colunas (`id`, `name`, `description`, `score`).
+O sistema utiliza migrations para organizar a evolução da estrutura do banco de dados e manter a consistência das informações.
 
-4. **Sincronizar Alterações (Refresh):**
-   - Como a extensão não atualiza automaticamente, sempre que cadastrar ou excluir um setor na interface web, clique no botão de **Seta Circular (↻)** no topo da tabela para recarregar os dados físicos salvos.
+---
 
+## 🔐 Segurança
 
-## Checklist 5S atual
+O Sensus 5S adota mecanismos de proteção para os dados e operações do sistema:
 
-O checklist configurado nesta versão contém os 10 primeiros critérios de cada um dos cinco sensos (50 critérios no total), com notas de 1 a 5 e pesos de 1 a 3. A migration `backend/database/migrations/002_checklist_50_criterios_ponderados.sql` mantém os critérios históricos no banco e desativa os que não fazem parte do checklist atual.
+- Autenticação por JWT.
+- Senhas protegidas por hash.
+- Controle de permissões por perfil.
+- Variáveis sensíveis armazenadas em arquivos de ambiente.
+- Separação entre credenciais de desenvolvimento e produção.
+- Controle de acesso aos recursos conforme a responsabilidade do usuário.
+
+---
+
+## 🎓 Contexto Acadêmico
+
+O **Sensus 5S** é um projeto de desenvolvimento tecnológico e acadêmico, concebido para integrar conhecimentos de desenvolvimento de sistemas, gestão organizacional e melhoria contínua.
+
+A proposta busca demonstrar como a tecnologia pode contribuir para a modernização dos processos de auditoria e gestão da qualidade, oferecendo ferramentas digitais para acompanhamento de resultados e apoio à tomada de decisões.
+
+---
+
+## 🔮 Evolução do Projeto
+
+O Sensus 5S encontra-se em desenvolvimento contínuo, com possibilidade de expansão de suas funcionalidades, incluindo:
+
+- Aprimoramento dos indicadores gerenciais.
+- Automação de notificações.
+- Expansão dos recursos de análise de desempenho.
+- Novas ferramentas de acompanhamento organizacional.
+- Evolução dos relatórios e recursos de exportação.
+
+---
+
+## 👨‍💻 Desenvolvimento
+
+**Sensus 5S — Sistema Inteligente de Gestão Comercial com Indicadores 5S.**
+
+Projeto desenvolvido com foco na integração entre tecnologia, gestão e melhoria contínua.
+
+**Tecnologia a serviço da organização e da excelência operacional.**
+
+---
+
+<p align="center">
+  © 2026 Sensus 5S. Todos os direitos reservados.
+</p>

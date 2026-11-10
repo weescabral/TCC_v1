@@ -114,12 +114,21 @@ async function carregarSetores() {
       return;
     }
 
-    setores.forEach((setor) => {
-      const scoreNumber = Number(setor.score_atual || 0);
-      const scoreClass = scoreNumber >= 80 ? "success" : scoreNumber >= 60 ? "" : "danger";
+    setores.forEach((setor, indice) => {
+      const possuiScoreFinalizado = setor.score_atual !== null && setor.score_atual !== undefined;
+      const scoreNumber = possuiScoreFinalizado ? Number(setor.score_atual) : null;
+      // Faixas de desempenho: <50 vermelho, 50–69 laranja,
+      // 70–84 amarelo e 85–100 verde.
+      const scoreClass = !possuiScoreFinalizado ? "" :
+        scoreNumber < 50 ? "performance-critical" :
+        scoreNumber < 70 ? "performance-low" :
+        scoreNumber < 85 ? "performance-medium" : "performance-good";
       const auditorDefinido = Boolean(setor.auditor_id);
       const periodicidade = setor.periodicidade_auditoria || "mensal";
       const isAdmin = JSON.parse(localStorage.getItem("sensus_usuario") || "{}").perfil === "administrador";
+      // Código visual sequencial: 001, 002, 003...
+      // O ID real do banco permanece inalterado.
+      const codigoExibicao = String(indice + 1).padStart(3, "0");
 
       const card = document.createElement("div");
       card.className = "card sector-card";
@@ -130,7 +139,7 @@ async function carregarSetores() {
               <h3><i class="icon-building-2"></i> ${escapeHtml(setor.nome)}</h3>
               <p>${escapeHtml(setor.descricao || "Sem descrição.")}</p>
             </div>
-            <span class="badge">${escapeHtml(setor.codigo || "-")}</span>
+            <span class="badge">${escapeHtml(codigoExibicao)}</span>
           </div>
 
           <p style="margin-top:12px;color:#64748b;">
@@ -146,13 +155,15 @@ async function carregarSetores() {
         </div>
 
         <div class="sector-footer">
-          <span>Último Score: <strong class="${scoreClass}">${scoreNumber.toFixed(2)}%</strong></span>
+          <span>${possuiScoreFinalizado
+            ? `Último Score: <strong class="${scoreClass}">${scoreNumber.toFixed(2)}%</strong>`
+            : '<span class="sector-no-score">Nunca auditado</span>'}</span>
           <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-            ${isAdmin ? `<button class="btn-outline" type="button" onclick='iniciarEdicao(${JSON.stringify(setor)})'>Editar</button>` : ''}
+            ${isAdmin ? `<button class="btn-primary" type="button" onclick='iniciarEdicao(${JSON.stringify(setor)})'>Editar</button>` : ''}
             ${auditorDefinido && (isAdmin || Number(setor.auditor_id) === Number(JSON.parse(localStorage.getItem("sensus_usuario") || "{}").id))
-              ? `<a href="./checklist.html?setor=${encodeURIComponent(setor.id)}" class="btn-outline">Auditar</a>`
-              : `<button type="button" class="btn-outline disabled" disabled title="Este setor não está atribuído a você">Auditar</button>`}
-            ${isAdmin ? `<button class="btn-outline" type="button" onclick='desativarSetor(${setor.id}, ${JSON.stringify(setor.nome)})'>Desativar</button>` : ''}
+              ? `<a href="./checklist.html?setor=${encodeURIComponent(setor.id)}" class="btn-primary">Auditar</a>`
+              : `<button type="button" class="btn-primary disabled" disabled title="Este setor não está atribuído a você">Auditar</button>`}
+            ${isAdmin ? `<button class="btn-primary" type="button" onclick='desativarSetor(${setor.id}, ${JSON.stringify(setor.nome)})'>Desativar</button>` : ''}
           </div>
         </div>
       `;
