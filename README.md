@@ -257,11 +257,11 @@ Exemplo:
 # SERVIDOR
 PORT=3000
 
-# BANCO DE DADOS
-DB_HOST=localhost
-DB_USER=seu_usuario
-DB_PASSWORD=sua_senha
-DB_DATABASE=sensus_db
+# Banco de dados MySQL
+DB_HOST=seu_host_mysql
+DB_USER=seu_usuario_mysql
+DB_PASSWORD=sua_senha_mysql
+DB_DATABASE=seu_banco_de_dados_mysql
 DB_PORT=3306
 
 # AUTENTICAÇÃO
