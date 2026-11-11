@@ -306,3 +306,18 @@ document.addEventListener('click', (event) => {
   botao.setAttribute('aria-pressed', String(mostrar));
 });
 document.addEventListener('DOMContentLoaded', aplicarTema);
+
+//Favicon
+document.addEventListener("DOMContentLoaded", () => {
+    if (!document.querySelector("link[rel='icon']")) {
+        const link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/png';
+        
+
+        const isInPages = window.location.pathname.includes('/pages/');
+        link.href = isInPages ? '../assets/logotipo_sistema_sensus.png' : 'assets/logotipo_sistema_sensus.png';
+        
+        document.head.appendChild(link);
+        }
+});
