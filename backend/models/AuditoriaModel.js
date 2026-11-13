@@ -283,12 +283,17 @@ async function criar({
             throw error;
         }
 
-        // Sequência anual por empresa. O bloqueio impede códigos repetidos
-        // quando duas auditorias são iniciadas simultaneamente.
+        // O índice UNIQUE de auditorias.codigo é global (não é composto por empresa).
+        // Portanto, a sequência e o bloqueio também precisam ser globais por ano.
+        // Isso evita colisões entre empresas e concorrência entre criações simultâneas.
         const anoCodigo = new Date().getFullYear();
-        bloqueioCodigo = `sensus_aud_${empresa_id}_${anoCodigo}`;
-        const [[lock]] = await connection.query('SELECT GET_LOCK(?, 10) AS obtido', [bloqueioCodigo]);
-        if (Number(lock.obtido) !== 1) {
+        bloqueioCodigo = `sensus_aud_global_${anoCodigo}`;
+        const [[lock]] = await connection.query(
+            'SELECT GET_LOCK(?, 10) AS obtido',
+            [bloqueioCodigo]
+        );
+
+        if (Number(lock?.obtido) !== 1) {
             const error = new Error('Não foi possível reservar o próximo código. Tente novamente.');
             error.status = 503;
             throw error;
@@ -298,11 +303,24 @@ async function criar({
         const [[sequencia]] = await connection.query(
             `SELECT COALESCE(MAX(CAST(SUBSTRING(codigo, ?) AS UNSIGNED)), 0) AS ultimo
              FROM auditorias
-             WHERE empresa_id = ? AND codigo REGEXP ?`,
-            [prefixo.length + 1, empresa_id, `^AUD-${anoCodigo}-[0-9]+$`]
+             WHERE codigo REGEXP ?`,
+            [prefixo.length + 1, `^AUD-${anoCodigo}-[0-9]+$`]
         );
-        const proximo = Number(sequencia.ultimo) + 1;
-        const codigo = `${prefixo}${String(proximo).padStart(4, '0')}`;
+
+        let proximo = Number(sequencia?.ultimo || 0) + 1;
+        let codigo = `${prefixo}${String(proximo).padStart(4, '0')}`;
+
+        // Proteção adicional caso existam códigos antigos fora do padrão esperado.
+        // O bloqueio global mantém esta verificação segura entre requisições novas.
+        while (true) {
+            const [[existente]] = await connection.query(
+                'SELECT id FROM auditorias WHERE codigo = ? LIMIT 1',
+                [codigo]
+            );
+            if (!existente) break;
+            proximo += 1;
+            codigo = `${prefixo}${String(proximo).padStart(4, '0')}`;
+        }
 
         const [result] = await connection.query(
             `INSERT INTO auditorias

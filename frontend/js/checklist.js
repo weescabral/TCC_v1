@@ -215,23 +215,24 @@ async function restaurarAuditoriaEmAndamento() {
 }
 
 function configurarAvisoSaidaDuranteAuditoria() {
-  const avisarSaida = (evento) => {
+  const avisarSaida = async (evento) => {
     if (!estado.auditoriaId || estado.auditoriaFinalizada || estado.permitirSaida) return;
 
     const link = evento.currentTarget;
     if (!link || !link.closest('.sidebar-menu')) return;
 
-    const confirmar = window.confirm(
-      '⚠️ A auditoria está em andamento. Se você sair pela barra lateral antes de finalizar, esta auditoria será abandonada e você terá que refazê-la.\n\nDeseja sair mesmo assim?'
+    // A navegação é pausada enquanto o diálogo personalizado aguarda a decisão.
+    evento.preventDefault();
+    const confirmar = await window.sensusConfirm(
+      'A auditoria está em andamento. Se você sair pela barra lateral antes de finalizar, esta auditoria será abandonada e você terá que refazê-la.',
+      { title: 'Sair da auditoria?', type: 'warning', confirmText: 'Sair mesmo assim' }
     );
 
-    if (!confirmar) {
-      evento.preventDefault();
-      return;
-    }
+    if (!confirmar) return;
 
     limparEstadoAuditoria();
     estado.permitirSaida = true;
+    window.location.href = link.href;
   };
 
   document.querySelectorAll('.sidebar-menu a').forEach((link) => {
@@ -598,7 +599,7 @@ function renderizarCriterios(criterios) {
         placeholder="Descreva observações ou não conformidades..."
       >${respostaSalva.observacao || ''}</textarea>
 
-      <div class="evidencia-criterio" style="margin-top:12px; padding:12px; border:1px dashed #cbd5e1; border-radius:10px; background:#f8fafc;">
+      <div class="evidencia-criterio">
         <label class="rotulo-observacao" for="evidencia-${criterio.id}">Evidência (opcional)</label>
         <input
           id="evidencia-${criterio.id}"

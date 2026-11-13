@@ -164,6 +164,163 @@ function obterApiUrl() {
   return window.SENSUS_API_URL || 'http://localhost:3000/api';
 }
 
+
+// Notificações visuais padronizadas do Sensus 5S.
+function sensusNotificar(mensagem, tipo = 'info', duracao = 5200) {
+  const tipos = {
+    success: { titulo: 'Tudo certo!', icone: 'icon-check-circle-2' },
+    warning: { titulo: 'Atenção', icone: 'icon-alert-triangle' },
+    error: { titulo: 'Não foi possível concluir', icone: 'icon-circle-x' },
+    info: { titulo: 'Informação', icone: 'icon-info' }
+  };
+  const configuracao = tipos[tipo] || tipos.info;
+  let regiao = document.getElementById('sensus-toast-region');
+  if (!regiao) {
+    regiao = document.createElement('div');
+    regiao.id = 'sensus-toast-region';
+    regiao.className = 'sensus-toast-region';
+    regiao.setAttribute('aria-live', 'polite');
+    regiao.setAttribute('aria-atomic', 'false');
+    document.body.appendChild(regiao);
+  }
+  const toast = document.createElement('section');
+  toast.className = `sensus-toast sensus-toast-${tipo}`;
+  toast.setAttribute('role', tipo === 'error' ? 'alert' : 'status');
+  const icone = document.createElement('span');
+  icone.className = 'sensus-toast-icon';
+  icone.innerHTML = `<i class="${configuracao.icone}" aria-hidden="true"></i>`;
+  const conteudo = document.createElement('div');
+  conteudo.className = 'sensus-toast-content';
+  const titulo = document.createElement('strong');
+  titulo.textContent = configuracao.titulo;
+  const texto = document.createElement('p');
+  texto.textContent = String(mensagem ?? '');
+  conteudo.append(titulo, texto);
+  const fechar = document.createElement('button');
+  fechar.type = 'button';
+  fechar.className = 'sensus-toast-close';
+  fechar.setAttribute('aria-label', 'Fechar notificação');
+  fechar.innerHTML = '<i class="icon-x" aria-hidden="true"></i>';
+  const remover = () => {
+    if (toast.dataset.removing) return;
+    toast.dataset.removing = '1';
+    toast.classList.add('is-leaving');
+    window.setTimeout(() => toast.remove(), 220);
+  };
+  fechar.addEventListener('click', remover);
+  toast.append(icone, conteudo, fechar);
+  regiao.appendChild(toast);
+  if (duracao > 0) window.setTimeout(remover, duracao);
+  return toast;
+}
+
+
+
+// Diálogos personalizados Sensus 5S: substituem confirm() e prompt() nativos.
+function sensusDialog({ title = 'Confirmação', message = '', type = 'warning', mode = 'confirm', value = '', placeholder = '', confirmText, cancelText = 'Cancelar' } = {}) {
+  return new Promise((resolve) => {
+    const anterior = document.getElementById('sensus-dialog-backdrop');
+    anterior?.remove();
+
+    const icones = {
+      warning: 'icon-alert-triangle',
+      info: 'icon-info',
+      success: 'icon-check-circle-2',
+      error: 'icon-circle-x'
+    };
+    const backdrop = document.createElement('div');
+    backdrop.id = 'sensus-dialog-backdrop';
+    backdrop.className = 'sensus-dialog-backdrop';
+    backdrop.innerHTML = `
+      <section class="sensus-dialog" role="dialog" aria-modal="true" aria-labelledby="sensus-dialog-title" aria-describedby="sensus-dialog-message">
+        <div class="sensus-dialog-heading">
+          <span class="sensus-dialog-icon sensus-dialog-icon-${type}"><i class="${icones[type] || icones.info}" aria-hidden="true"></i></span>
+          <div class="sensus-dialog-copy">
+            <h2 id="sensus-dialog-title"></h2>
+            <p id="sensus-dialog-message"></p>
+          </div>
+          <button class="sensus-dialog-close" type="button" aria-label="Fechar">×</button>
+        </div>
+        ${mode === 'prompt' ? `<input class="sensus-dialog-input" type="text" autocomplete="off">` : ''}
+        <div class="sensus-dialog-actions">
+          <button class="sensus-dialog-cancel" type="button"></button>
+          <button class="sensus-dialog-confirm" type="button"></button>
+        </div>
+      </section>
+    `;
+    const dialog = backdrop.querySelector('.sensus-dialog');
+    const input = backdrop.querySelector('.sensus-dialog-input');
+    const cancel = () => finish(mode === 'prompt' ? null : false);
+    const finish = (result) => {
+      backdrop.classList.remove('is-open');
+      document.removeEventListener('keydown', onKeydown);
+      window.setTimeout(() => backdrop.remove(), 160);
+      resolve(result);
+    };
+    const onKeydown = (event) => {
+      if (event.key === 'Escape') { event.preventDefault(); cancel(); }
+      if (event.key === 'Enter' && mode === 'prompt' && document.activeElement === input) {
+        event.preventDefault();
+        finish(input.value);
+      }
+    };
+
+    backdrop.querySelector('#sensus-dialog-title').textContent = title;
+    backdrop.querySelector('#sensus-dialog-message').textContent = message;
+    backdrop.querySelector('.sensus-dialog-cancel').textContent = cancelText;
+    backdrop.querySelector('.sensus-dialog-confirm').textContent =
+      confirmText || (mode === 'prompt' ? 'Continuar' : 'Confirmar');
+    backdrop.querySelector('.sensus-dialog-close').addEventListener('click', cancel);
+    backdrop.querySelector('.sensus-dialog-cancel').addEventListener('click', cancel);
+    backdrop.querySelector('.sensus-dialog-confirm').addEventListener('click', () => {
+      finish(mode === 'prompt' ? input.value : true);
+    });
+    backdrop.addEventListener('click', (event) => { if (event.target === backdrop) cancel(); });
+    if (input) {
+      input.value = value;
+      input.placeholder = placeholder;
+    }
+
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => backdrop.classList.add('is-open'));
+    document.addEventListener('keydown', onKeydown);
+    window.setTimeout(() => (input || backdrop.querySelector('.sensus-dialog-confirm')).focus(), 40);
+  });
+}
+
+window.sensusConfirm = (message, options = {}) => sensusDialog({
+  title: options.title || 'Confirmação',
+  message,
+  type: options.type || 'warning',
+  confirmText: options.confirmText || 'Confirmar',
+  cancelText: options.cancelText || 'Cancelar'
+});
+
+window.sensusPrompt = (message, options = {}) => sensusDialog({
+  title: options.title || 'Informe os dados',
+  message,
+  type: options.type || 'info',
+  mode: 'prompt',
+  value: options.value || '',
+  placeholder: options.placeholder || '',
+  confirmText: options.confirmText || 'Salvar',
+  cancelText: options.cancelText || 'Cancelar'
+});
+
+// Mantém compatibilidade com as páginas existentes, mas elimina os alertas nativos.
+window.sensusNotificar = sensusNotificar;
+window.alert = (mensagem) => {
+  const texto = String(mensagem ?? '').toLocaleLowerCase('pt-BR');
+  const tipo = /sucesso|salvo|salva|atualizado|atualizada|cadastrado|cadastrada|conclu[ií]d[oa]/.test(texto)
+    ? 'success'
+    : /ainda possui|pendente|aten[cç][aã]o|antes de/.test(texto)
+      ? 'warning'
+      : /erro|n[aã]o foi poss[ií]vel|inv[aá]lido|obrigat[oó]rio|falha/.test(texto)
+        ? 'error'
+        : 'info';
+  return sensusNotificar(mensagem, tipo);
+};
+
 function abrirPerfil() {
   const modal = document.getElementById('sensus-profile-modal');
   if (!modal) return;

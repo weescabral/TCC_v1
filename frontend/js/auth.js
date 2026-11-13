@@ -113,3 +113,54 @@ document.addEventListener('click', (event) => {
     icone.classList.toggle('icon-eye-off', mostrarSenha);
   }
 });
+
+
+// Atalho do cabeçalho: retorna ao topo para manter o título completo visível.
+// O formulário já está na página; o foco no e-mail não deve provocar outra rolagem.
+document.getElementById('goToLogin')?.addEventListener('click', () => {
+  const formulario = document.getElementById('loginCard');
+  if (!formulario || formulario.hidden) mostrar('login');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('userInput')?.focus({ preventScroll: true });
+});
+
+// Popover de suporte com endereço selecionável e ação de cópia.
+const supportButton = document.getElementById('supportLink');
+const supportPopover = document.getElementById('supportPopover');
+supportButton?.addEventListener('click', () => {
+  const abrir = supportPopover?.hidden ?? false;
+  if (!supportPopover) return;
+  supportPopover.hidden = !abrir;
+  supportButton.setAttribute('aria-expanded', String(abrir));
+});
+document.getElementById('copySupportEmail')?.addEventListener('click', async () => {
+  const email = document.getElementById('supportEmail')?.textContent?.trim();
+  const feedback = document.getElementById('supportCopyFeedback');
+  if (!email || !feedback) return;
+  try {
+    await navigator.clipboard.writeText(email);
+    feedback.textContent = 'E-mail copiado para a área de transferência.';
+  } catch {
+    const selecao = window.getSelection();
+    const intervalo = document.createRange();
+    intervalo.selectNodeContents(document.getElementById('supportEmail'));
+    selecao.removeAllRanges();
+    selecao.addRange(intervalo);
+    feedback.textContent = 'Selecione o endereço e copie com Ctrl+C.';
+  }
+});
+document.addEventListener('click', (event) => {
+  if (!supportPopover || supportPopover.hidden) return;
+  if (!event.target.closest('.support-menu')) {
+    supportPopover.hidden = true;
+    supportButton?.setAttribute('aria-expanded', 'false');
+  }
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && supportPopover && !supportPopover.hidden) {
+    supportPopover.hidden = true;
+    supportButton?.setAttribute('aria-expanded', 'false');
+    supportButton?.focus();
+  }
+});

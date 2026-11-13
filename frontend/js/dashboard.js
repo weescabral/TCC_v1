@@ -126,13 +126,13 @@ async function carregarDashboard() {
     console.error('Erro ao carregar Dashboard:', erro);
 
     document.getElementById('diagnosticoTexto').textContent =
-      erro.message;
+      'Não foi possível atualizar os indicadores neste momento. Verifique sua conexão e tente novamente.';
 
     document.getElementById('diagnosticoStatus').textContent =
-      'Erro ao carregar dados';
+      'Dados temporariamente indisponíveis';
 
     document.getElementById('diagnosticoStatus').className =
-      'danger';
+      'warning';
   }
 }
 
@@ -192,9 +192,13 @@ function renderizarEvolucao(evolucao = []) {
           tension: 0.35,
           fill: true,
           segment: {
-            borderColor: (ctx) => corDesempenho((Number(ctx.p0.parsed.y) + Number(ctx.p1.parsed.y)) / 2)
+            borderColor: (ctx) => {
+              const anterior = Number(ctx.p0?.parsed?.y ?? ctx.p1?.parsed?.y ?? 0);
+              const proximo = Number(ctx.p1?.parsed?.y ?? anterior);
+              return corDesempenho((anterior + proximo) / 2);
+            }
           },
-          pointBackgroundColor: (ctx) => corDesempenho(ctx.parsed.y),
+          pointBackgroundColor: (ctx) => corDesempenho(ctx.parsed?.y ?? ctx.raw ?? 0),
           pointBorderColor: document.documentElement.dataset.theme === 'escuro' ? '#182437' : '#ffffff',
           pointBorderWidth: 2,
         },
@@ -450,15 +454,18 @@ function preencherDiagnostico(dados) {
   const texto = document.getElementById('diagnosticoTexto');
   const status = document.getElementById('diagnosticoStatus');
 
+  const cardDiagnostico = texto.closest('.alert-card');
   if (!dados.kpis?.totalAuditorias) {
+    cardDiagnostico?.classList.add('diagnostico-sem-dados');
     texto.textContent =
-      'Finalize uma auditoria para gerar indicadores executivos.';
+      'Assim que as primeiras auditorias forem concluídas, seus indicadores, resultados e recomendações aparecerão aqui. Comece realizando uma auditoria para acompanhar a evolução da sua empresa.';
 
-    status.textContent = 'Aguardando auditoria';
+    status.textContent = 'Aguardando primeiras auditorias';
     status.className = 'neutral';
     return;
   }
 
+  cardDiagnostico?.classList.remove('diagnostico-sem-dados');
   if (indice < 60) {
     texto.textContent =
       `O índice atual é ${formatarPercentual(indice)}. ` +

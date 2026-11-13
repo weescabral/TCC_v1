@@ -1,13 +1,13 @@
 const db = require('../config/database');
 
-async function listarPorEmpresa(empresaId) {
+async function listarPorEmpresa(empresaId, status = 'ativos') {
   const [rows] = await db.query(
     `SELECT u.id, u.empresa_id, u.nome, u.email, u.perfil, u.ativo, u.motivo_inativacao, u.inativado_em, u.criado_em,
             (SELECT COUNT(*) FROM setores s WHERE s.auditor_id = u.id AND s.empresa_id = u.empresa_id AND s.ativo = TRUE) AS setores_atribuidos
      FROM usuarios u
-     WHERE u.empresa_id = ? AND u.ativo = TRUE
+     WHERE u.empresa_id = ? AND u.ativo = ?
      ORDER BY u.nome`,
-    [empresaId]
+    [empresaId, status === 'inativos' ? 0 : 1]
   );
   return rows;
 }
@@ -54,4 +54,15 @@ async function desativar(id, empresaId, motivo) {
   );
 }
 
-module.exports = { listarPorEmpresa, buscarPorId, criar, atualizar, trocarSenha, desativar };
+
+async function reativar(id, empresaId) {
+  const [result] = await db.query(
+    `UPDATE usuarios
+     SET ativo = TRUE, motivo_inativacao = NULL, inativado_em = NULL
+     WHERE id = ? AND empresa_id = ? AND ativo = FALSE AND perfil = 'auditor'`,
+    [id, empresaId]
+  );
+  return result.affectedRows > 0 ? buscarPorId(id, empresaId) : null;
+}
+
+module.exports = { listarPorEmpresa, buscarPorId, criar, atualizar, trocarSenha, desativar, reativar };

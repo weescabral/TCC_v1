@@ -3,7 +3,8 @@ const UsuarioModel = require('../models/UsuarioModel');
 const SetorModel = require('../models/SetorModel');
 
 async function listar(req, res) {
-  const usuarios = await UsuarioModel.listarPorEmpresa(req.usuario.empresa_id);
+  const status = req.query.status === 'inativos' ? 'inativos' : 'ativos';
+  const usuarios = await UsuarioModel.listarPorEmpresa(req.usuario.empresa_id, status);
   return res.json(usuarios);
 }
 
@@ -92,4 +93,18 @@ async function remover(req, res) {
   return res.status(200).json({ mensagem: 'Usuário inativado com sucesso. O histórico foi preservado.' });
 }
 
-module.exports = { listar, criar, atualizar, trocarSenha, remover };
+
+async function reativar(req, res) {
+  const usuarioExistente = await UsuarioModel.buscarPorId(req.params.id, req.usuario.empresa_id);
+  if (!usuarioExistente) return res.status(404).json({ erro: 'Usuário não encontrado.' });
+  if (usuarioExistente.ativo) return res.status(409).json({ erro: 'Este usuário já está ativo.' });
+  if (usuarioExistente.perfil !== 'auditor') {
+    return res.status(409).json({ erro: 'A reativação por esta opção está disponível apenas para auditores.' });
+  }
+
+  const usuario = await UsuarioModel.reativar(req.params.id, req.usuario.empresa_id);
+  if (!usuario) return res.status(409).json({ erro: 'Não foi possível reativar este auditor. Atualize a lista e tente novamente.' });
+  return res.json({ mensagem: 'Auditor reativado com sucesso.', usuario });
+}
+
+module.exports = { listar, criar, atualizar, trocarSenha, remover, reativar };

@@ -209,7 +209,10 @@ sectorForm?.addEventListener("submit", async (event) => {
 });
 
 async function desativarSetor(id, nome) {
-  const motivo = prompt(`Informe o motivo da desativação do setor "${nome}":`);
+  const motivo = await window.sensusPrompt(
+    `Informe o motivo da desativação do setor "${nome}".`,
+    { title: 'Desativar setor', placeholder: 'Motivo da desativação', confirmText: 'Continuar' }
+  );
   if (motivo === null) return;
 
   if (!motivo.trim()) {

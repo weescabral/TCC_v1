@@ -28,3 +28,102 @@
 footer .footer-logo { justify-content:center; width:100%; }
 footer .footer-logo p { margin:0; }
 @media(max-width:760px){.header nav{gap:18px}}
+
+
+/* Acesso direto ao formulário e contato de suporte */
+.btn-header { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; font: inherit; font-weight: 700; transition: .18s ease; }
+.btn-header:hover { background: #ffb300; color: #071b3d; }
+.support-menu { position: relative; display: flex; align-items: center; }
+.support-menu > button { border: 0; padding: 8px 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.support-menu > button:hover, .support-menu > button:focus-visible { color: #ffca45; }
+.support-popover { position: absolute; z-index: 100; top: calc(100% + 18px); right: -28px; width: min(330px, calc(100vw - 28px)); padding: 18px; border: 1px solid #e2e8f0; border-radius: 15px; background: #fff; color: #10213b; box-shadow: 0 18px 48px #0003; }
+.support-popover[hidden] { display: none; }
+.support-popover::before { content: ""; position: absolute; top: -7px; right: 43px; width: 13px; height: 13px; transform: rotate(45deg); background: #fff; border-left: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0; }
+.support-popover-heading { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+.support-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: #edf3fb; color: #0b3974; font-size: 19px; }
+.support-popover-heading strong, .support-popover-heading small { display: block; }
+.support-popover-heading strong { font-size: 14px; }
+.support-popover-heading small, .support-popover > p { color: #64748b; font-size: 12px; line-height: 1.5; }
+.support-popover > p { margin-bottom: 9px; }
+.support-email-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 11px; border: 1px solid #dce5f0; border-radius: 9px; background: #f8fafc; }
+.support-email-row a { color: #0b3974; font-size: 13px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; user-select: text; overflow-wrap: anywhere; }
+.support-email-row button { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border: 0; border-radius: 7px; background: #071b3d; color: #fff; cursor: pointer; }
+.support-email-row button:hover { background: #0b3974; }
+.support-copy-feedback { display: block; min-height: 16px; margin-top: 7px; color: #15803d; font-size: 11px; }
+@media (max-width:760px) { .support-popover { right: -12px; top: calc(100% + 12px); } .btn-header { padding: 9px 12px; font-size: 12px; } }
+
+
+/* Ajustes finos de alinhamento da navegação e da marca */
+.header {
+  min-height: 78px;
+  flex-shrink: 0;
+}
+.header nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 42px;
+  height: 100%;
+}
+.header nav > a,
+.header nav .support-menu > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0;
+  margin: 0;
+  line-height: 1.2;
+  vertical-align: middle;
+  font: inherit;
+  white-space: nowrap;
+}
+.header nav .support-menu {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  min-height: 42px;
+}
+.logo-icon.login-logo-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  padding: 0;
+  line-height: 0;
+  font-size: 0;
+  overflow: visible;
+}
+.login-logo-symbol {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  overflow: visible;
+}
+.login-logo-symbol polygon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.main {
+  padding-top: 82px;
+}
+.hero {
+  padding-top: 8px;
+}
+.hero h1 {
+  line-height: 1.2;
+  overflow: visible;
+}
+@media (max-width: 760px) {
+  .main { padding-top: 48px; }
+  .header nav { gap: 18px; }
+}
+
+
+/* Rolagem suave para os atalhos da página inicial. */
+html { scroll-behavior: smooth; }

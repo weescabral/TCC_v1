@@ -15,6 +15,7 @@
       <article class="card"><small>Administradores</small><strong id="usersAdmins">—</strong></article>
       <article class="card"><small>Auditores</small><strong id="usersAuditors">—</strong></article>
       <article class="card"><small>Setores atribuídos</small><strong id="usersAssigned">—</strong></article>
+      <article class="card"><small>Auditores inativos</small><strong id="usersInactive">—</strong></article>
     </section>
     <section class="users-layout">
       <article class="card users-form-card" id="userFormCard">
@@ -30,7 +31,11 @@
         </form>
       </article>
       <article class="card users-list-card">
-        <div class="users-section-heading"><div><h2>Equipe cadastrada</h2><p>Gerencie perfis e atribuições de cada pessoa.</p></div><input class="form-control users-search" id="userSearch" placeholder="Buscar por nome ou e-mail"></div>
+        <div class="users-section-heading"><div><h2>Equipe cadastrada</h2><p>Gerencie perfis, atribuições e situação dos usuários.</p></div><input class="form-control users-search" id="userSearch" placeholder="Buscar por nome ou e-mail"></div>
+        <div class="users-status-tabs" role="tablist" aria-label="Filtrar usuários">
+          <button class="users-status-tab is-active" id="tabUsersActive" type="button" role="tab" aria-selected="true">Ativos <span id="activeUsersCount">0</span></button>
+          <button class="users-status-tab" id="tabUsersInactive" type="button" role="tab" aria-selected="false">Auditores inativos <span id="inactiveUsersCount">0</span></button>
+        </div>
         <div id="usersList" class="users-list"><p class="empty-state">Carregando usuários...</p></div>
       </article>
     </section>

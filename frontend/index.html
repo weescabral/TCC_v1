@@ -12,19 +12,31 @@
 
   <header class="header">
     <div class="logo">
-      <div class="logo-icon login-logo-icon" aria-hidden="true">⬡</div>
+      <div class="logo-icon login-logo-icon" aria-hidden="true">
+        <svg class="login-logo-symbol" viewBox="0 0 24 24" focusable="false">
+          <polygon points="12,2.8 20,7.4 20,16.6 12,21.2 4,16.6 4,7.4" />
+        </svg>
+      </div>
       <span>SENSUS</span>
     </div>
 
     <nav>
       <a href="#" class="coming-soon-link" data-tooltip="Disponível em breve" aria-label="Recursos — disponível em breve">Recursos</a>
       <a href="#" class="coming-soon-link" data-tooltip="Disponível em breve" aria-label="Planos — disponível em breve">Planos</a>
-      <a href="mailto:sensusgestao@gmail.com" id="supportLink" title="Enviar e-mail para sensusgestao@gmail.com">Suporte</a>
+      <div class="support-menu">
+        <button type="button" id="supportLink" aria-expanded="false" aria-controls="supportPopover">Suporte</button>
+        <section class="support-popover" id="supportPopover" role="dialog" aria-label="Contato do suporte" hidden>
+          <div class="support-popover-heading"><span class="support-icon"><i class="icon-headset"></i></span><div><strong>Precisa de ajuda?</strong><small>Estamos disponíveis para contato.</small></div></div>
+          <p>Entre em contato conosco através do e-mail:</p>
+          <div class="support-email-row"><a href="mailto:sensusgestao@gmail.com" id="supportEmail">sensusgestao@gmail.com</a><button type="button" id="copySupportEmail" aria-label="Copiar e-mail" title="Copiar e-mail"><i class="icon-copy"></i></button></div>
+          <small class="support-copy-feedback" id="supportCopyFeedback" role="status" aria-live="polite"></small>
+        </section>
+      </div>
     </nav>
 
-    <button class="btn-header" type="button">
+    <button class="btn-header" id="goToLogin" type="button">
       <i class="icon-user"></i>
-      Entrar
+      Acessar minha conta
     </button>
   </header>
 
@@ -96,7 +108,7 @@
         </div>
       </div>
 
-      <form class="login-card" id="loginCard">
+      <form class="login-card" id="loginCard" tabindex="-1">
         <label for="userInput">E-mail ou Usuário</label>
         <div class="input-box">
           <i class="icon-mail"></i>

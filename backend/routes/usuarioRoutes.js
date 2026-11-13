@@ -10,6 +10,7 @@ router.get('/', autorizar('administrador'), asyncHandler(UsuarioController.lista
 router.post('/', autorizar('administrador'), asyncHandler(UsuarioController.criar));
 router.put('/:id', autorizar('administrador'), asyncHandler(UsuarioController.atualizar));
 router.patch('/:id/senha', autorizar('administrador'), asyncHandler(UsuarioController.trocarSenha));
+router.patch('/:id/reativar', autorizar('administrador'), asyncHandler(UsuarioController.reativar));
 router.delete('/:id', autorizar('administrador'), asyncHandler(UsuarioController.remover));
 
 module.exports = router;
