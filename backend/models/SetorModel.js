@@ -153,6 +153,91 @@ async function desativar(id, empresaId, motivo) {
   );
 }
 
+
+async function listarInativos(empresaId) {
+  const [rows] = await db.query(
+    `SELECT
+       s.id, s.codigo, s.empresa_id, s.nome, s.descricao, s.responsavel,
+       s.localizacao, s.criado_por, s.criado_em, s.auditor_id,
+       u.nome AS auditor_nome, u.email AS auditor_email, u.ativo AS auditor_ativo,
+       s.periodicidade_auditoria, s.ativo, s.motivo_inativacao, s.inativado_em
+     FROM setores s
+     LEFT JOIN usuarios u ON u.id = s.auditor_id
+     WHERE s.empresa_id = ? AND s.ativo = FALSE
+     ORDER BY s.inativado_em DESC, s.nome`,
+    [empresaId]
+  );
+  return rows;
+}
+
+async function reativar(id, empresaId) {
+  const [result] = await db.query(
+    `UPDATE setores
+     SET ativo = TRUE, motivo_inativacao = NULL, inativado_em = NULL
+     WHERE id = ? AND empresa_id = ? AND ativo = FALSE`,
+    [id, empresaId]
+  );
+  return result.affectedRows > 0 ? buscarPorId(id, empresaId) : null;
+}
+
+
+async function excluirDefinitivamente(id, empresaId) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [setores] = await connection.query(
+      `SELECT id, ativo
+       FROM setores
+       WHERE id = ? AND empresa_id = ?
+       FOR UPDATE`,
+      [id, empresaId]
+    );
+
+    if (!setores.length) {
+      await connection.rollback();
+      return { excluido: false, motivo: 'nao_encontrado' };
+    }
+
+    if (Boolean(setores[0].ativo)) {
+      await connection.rollback();
+      return { excluido: false, motivo: 'setor_ativo' };
+    }
+
+    const [[contagem]] = await connection.query(
+      `SELECT COUNT(*) AS total
+       FROM auditorias
+       WHERE setor_id = ? AND empresa_id = ?`,
+      [id, empresaId]
+    );
+    const totalAuditorias = Number(contagem.total || 0);
+
+    if (totalAuditorias > 0) {
+      await connection.rollback();
+      return { excluido: false, motivo: 'possui_historico', totalAuditorias };
+    }
+
+    const [resultado] = await connection.query(
+      `DELETE FROM setores
+       WHERE id = ? AND empresa_id = ? AND ativo = FALSE`,
+      [id, empresaId]
+    );
+
+    if (!resultado.affectedRows) {
+      await connection.rollback();
+      return { excluido: false, motivo: 'nao_excluido' };
+    }
+
+    await connection.commit();
+    return { excluido: true };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 async function listarAuditores(empresaId) {
   const [rows] = await db.query(
     `SELECT id, nome, email, perfil
@@ -182,6 +267,9 @@ async function contarAtivosPorAuditor(auditorId, empresaId) {
 
 module.exports = {
   listar,
+  listarInativos,
+  reativar,
+  excluirDefinitivamente,
   buscarPorId,
   criar,
   atualizar,

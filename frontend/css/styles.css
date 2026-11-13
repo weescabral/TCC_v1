@@ -2189,3 +2189,138 @@ html[data-theme="escuro"] .user-actions .user-reactivate:hover { background: #1d
   .user-row { align-items: flex-start; flex-wrap: wrap; }
   .user-actions { width: 100%; justify-content: flex-start; }
 }
+
+
+/* Ajustes visuais: cartões de setores e modal de perfil */
+.sector-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 360px));
+  gap: 22px;
+  align-items: stretch;
+}
+.sector-card {
+  padding: 28px;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.sector-card h3 {
+  font-size: 22px;
+  line-height: 1.3;
+  margin-bottom: 14px;
+}
+.sector-card p {
+  font-size: 16px;
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+.sector-card > div:first-child > p[style] {
+  font-size: 15px !important;
+  line-height: 1.7;
+}
+.sector-footer {
+  gap: 14px;
+  padding-top: 18px;
+  margin-top: 22px;
+  align-items: center;
+}
+.sector-footer > span {
+  font-size: 14px;
+  line-height: 1.45;
+}
+.sector-footer .btn-primary {
+  padding: 13px 20px;
+  font-size: 15px;
+}
+
+/* Modal de perfil mais espaçoso e campo de e-mail legível no tema escuro */
+.sensus-modal {
+  width: min(540px, 100%);
+  padding: 32px;
+}
+.sensus-modal form input:disabled {
+  color: #64748b;
+  background: #f8fafc;
+}
+html[data-theme="escuro"] .sensus-modal form input:disabled,
+html[data-theme="escuro"] #profile-email:disabled {
+  color: #d5deeb !important;
+  background: #101827 !important;
+  border-color: #475569 !important;
+  opacity: 1;
+  -webkit-text-fill-color: #d5deeb;
+}
+@media (max-width: 650px) {
+  .sector-grid {
+    grid-template-columns: 1fr;
+  }
+  .sector-card {
+    min-height: 0;
+    padding: 22px;
+  }
+  .sensus-modal {
+    padding: 26px 20px;
+  }
+  .profile-modal-actions {
+    flex-wrap: wrap;
+  }
+}
+
+
+/* Gestão de setores: abas de ativos/desativados e reativação */
+.sector-card-inactive {
+  border-style: dashed;
+  opacity: .96;
+}
+.sector-inactive-reason {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(148, 163, 184, .10);
+  font-size: 14px;
+}
+.sector-card-inactive .sector-footer {
+  border-top: 1px solid var(--border-color, rgba(148,163,184,.25));
+}
+
+
+/* Ação de exclusão definitiva na lista de setores desativados */
+.sector-inactive-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: flex-end;
+}
+.btn-danger-outline {
+  border: 1px solid #dc6262;
+  background: transparent;
+  color: #f08b8b;
+  border-radius: 10px;
+  padding: 11px 15px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+.btn-danger-outline:hover {
+  background: rgba(220, 98, 98, .14);
+  border-color: #ef7777;
+  color: #ffaaaa;
+}
+
+
+/* Exclusão definitiva de auditores inativos */
+.user-delete-permanent {
+  border-color: #dc6262 !important;
+  color: #f08b8b !important;
+}
+.user-delete-permanent:hover {
+  background: rgba(220, 98, 98, .14) !important;
+  border-color: #ef7777 !important;
+  color: #ffaaaa !important;
+}
+.user-row-inactive .user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

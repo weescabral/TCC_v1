@@ -80,6 +80,7 @@
           </div>
           <div class="user-actions">
             <button class="btn-outline user-reactivate" type="button" data-reactivate="${u.id}"><i class="icon-user-check"></i> Reativar</button>
+            <button class="btn-outline user-delete-permanent" type="button" data-delete-permanent="${u.id}"><i class="icon-trash-2"></i> Excluir definitivamente</button>
           </div>
         </article>`;
       }
@@ -159,6 +160,26 @@
     const pass = e.target.closest('[data-password]')?.dataset.password;
     const deactivate = e.target.closest('[data-deactivate]')?.dataset.deactivate;
     const reactivate = e.target.closest('[data-reactivate]')?.dataset.reactivate;
+    const deletePermanent = e.target.closest('[data-delete-permanent]')?.dataset.deletePermanent;
+
+    if (deletePermanent) {
+      const usuario = usuariosInativos.find(x => String(x.id) === deletePermanent);
+      if (!usuario) return;
+      const confirmar = await window.sensusConfirm(
+        `Deseja excluir definitivamente o auditor "${usuario.nome}"? A exclusão só será permitida se não houver auditorias, setores ou planos de ação vinculados. Se houver vínculos, o sistema bloqueará a operação.`,
+        { title:'Excluir auditor definitivamente', type:'danger', confirmText:'Excluir definitivamente' }
+      );
+      if (!confirmar) return;
+      try {
+        await request(`/usuarios/${deletePermanent}/definitivo`, { method:'DELETE' });
+        await load();
+        selecionarAba('inativos');
+        notificar('Auditor excluído definitivamente.', 'success');
+      } catch (err) {
+        notificar(err.message, 'error');
+      }
+      return;
+    }
 
     if (edit) {
       const u = usuariosAtivos.find(x => String(x.id) === edit);

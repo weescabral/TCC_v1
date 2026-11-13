@@ -11,6 +11,7 @@ router.post('/', autorizar('administrador'), asyncHandler(UsuarioController.cria
 router.put('/:id', autorizar('administrador'), asyncHandler(UsuarioController.atualizar));
 router.patch('/:id/senha', autorizar('administrador'), asyncHandler(UsuarioController.trocarSenha));
 router.patch('/:id/reativar', autorizar('administrador'), asyncHandler(UsuarioController.reativar));
+router.delete('/:id/definitivo', autorizar('administrador'), asyncHandler(UsuarioController.excluirDefinitivamente));
 router.delete('/:id', autorizar('administrador'), asyncHandler(UsuarioController.remover));
 
 module.exports = router;

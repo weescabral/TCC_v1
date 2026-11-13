@@ -94,6 +94,42 @@ async function remover(req, res) {
 }
 
 
+
+async function excluirDefinitivamente(req, res) {
+  if (Number(req.params.id) === Number(req.usuario.id)) {
+    return res.status(409).json({ erro: 'Você não pode excluir definitivamente seu próprio usuário.' });
+  }
+
+  const resultado = await UsuarioModel.excluirDefinitivamente(
+    req.params.id,
+    req.usuario.empresa_id
+  );
+
+  if (resultado.excluido) {
+    return res.json({ mensagem: 'Auditor excluído definitivamente.' });
+  }
+  if (resultado.motivo === 'nao_encontrado') {
+    return res.status(404).json({ erro: 'Auditor não encontrado.' });
+  }
+  if (resultado.motivo === 'nao_e_auditor') {
+    return res.status(409).json({ erro: 'Esta ação está disponível somente para usuários com perfil de auditor.' });
+  }
+  if (resultado.motivo === 'usuario_ativo') {
+    return res.status(409).json({ erro: 'Somente auditores inativos podem ser excluídos definitivamente.' });
+  }
+  if (resultado.motivo === 'possui_vinculos') {
+    const detalhes = [];
+    if (resultado.totalAuditorias) detalhes.push(`${resultado.totalAuditorias} auditoria(s)`);
+    if (resultado.totalSetores) detalhes.push(`${resultado.totalSetores} setor(es) vinculado(s)`);
+    if (resultado.totalPlanos) detalhes.push(`${resultado.totalPlanos} plano(s) de ação`);
+    return res.status(409).json({
+      erro: `Este auditor possui vínculos registrados (${detalhes.join(', ')}). Para preservar o histórico e a integridade dos dados, não é possível excluí-lo definitivamente. Você pode mantê-lo inativo.`,
+      ...resultado
+    });
+  }
+  return res.status(409).json({ erro: 'Não foi possível excluir o auditor. Atualize a lista e tente novamente.' });
+}
+
 async function reativar(req, res) {
   const usuarioExistente = await UsuarioModel.buscarPorId(req.params.id, req.usuario.empresa_id);
   if (!usuarioExistente) return res.status(404).json({ erro: 'Usuário não encontrado.' });
@@ -107,4 +143,4 @@ async function reativar(req, res) {
   return res.json({ mensagem: 'Auditor reativado com sucesso.', usuario });
 }
 
-module.exports = { listar, criar, atualizar, trocarSenha, remover, reativar };
+module.exports = { listar, criar, atualizar, trocarSenha, remover, reativar, excluirDefinitivamente };

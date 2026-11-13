@@ -55,6 +55,90 @@ async function desativar(id, empresaId, motivo) {
 }
 
 
+
+async function excluirDefinitivamente(id, empresaId) {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [usuarios] = await connection.query(
+      `SELECT id, perfil, ativo
+       FROM usuarios
+       WHERE id = ? AND empresa_id = ?
+       FOR UPDATE`,
+      [id, empresaId]
+    );
+
+    if (!usuarios.length) {
+      await connection.rollback();
+      return { excluido: false, motivo: 'nao_encontrado' };
+    }
+
+    const usuario = usuarios[0];
+    if (usuario.perfil !== 'auditor') {
+      await connection.rollback();
+      return { excluido: false, motivo: 'nao_e_auditor' };
+    }
+    if (Boolean(usuario.ativo)) {
+      await connection.rollback();
+      return { excluido: false, motivo: 'usuario_ativo' };
+    }
+
+    const [[auditorias]] = await connection.query(
+      `SELECT COUNT(*) AS total
+       FROM auditorias
+       WHERE usuario_id = ? AND empresa_id = ?`,
+      [id, empresaId]
+    );
+    const [[setores]] = await connection.query(
+      `SELECT COUNT(*) AS total
+       FROM setores
+       WHERE auditor_id = ? AND empresa_id = ?`,
+      [id, empresaId]
+    );
+    const [[planos]] = await connection.query(
+      `SELECT COUNT(*) AS total
+       FROM planos_acao
+       WHERE responsavel_id = ?`,
+      [id]
+    );
+
+    const totalAuditorias = Number(auditorias.total || 0);
+    const totalSetores = Number(setores.total || 0);
+    const totalPlanos = Number(planos.total || 0);
+
+    if (totalAuditorias || totalSetores || totalPlanos) {
+      await connection.rollback();
+      return {
+        excluido: false,
+        motivo: 'possui_vinculos',
+        totalAuditorias,
+        totalSetores,
+        totalPlanos
+      };
+    }
+
+    const [resultado] = await connection.query(
+      `DELETE FROM usuarios
+       WHERE id = ? AND empresa_id = ? AND ativo = FALSE AND perfil = 'auditor'`,
+      [id, empresaId]
+    );
+
+    if (!resultado.affectedRows) {
+      await connection.rollback();
+      return { excluido: false, motivo: 'nao_excluido' };
+    }
+
+    await connection.commit();
+    return { excluido: true };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 async function reativar(id, empresaId) {
   const [result] = await db.query(
     `UPDATE usuarios
@@ -65,4 +149,4 @@ async function reativar(id, empresaId) {
   return result.affectedRows > 0 ? buscarPorId(id, empresaId) : null;
 }
 
-module.exports = { listarPorEmpresa, buscarPorId, criar, atualizar, trocarSenha, desativar, reativar };
+module.exports = { listarPorEmpresa, buscarPorId, criar, atualizar, trocarSenha, desativar, reativar, excluirDefinitivamente };

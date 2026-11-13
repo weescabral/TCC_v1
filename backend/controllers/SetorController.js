@@ -48,6 +48,22 @@ async function listar(req, res) {
   return res.json(await SetorModel.listar(req.usuario.empresa_id, req.usuario));
 }
 
+async function listarInativos(req, res) {
+  return res.json(await SetorModel.listarInativos(req.usuario.empresa_id));
+}
+
+async function reativar(req, res) {
+  const setor = await SetorModel.buscarPorId(req.params.id, req.usuario.empresa_id);
+  if (!setor) return res.status(404).json({ erro: 'Setor não encontrado.' });
+  if (setor.ativo) return res.status(409).json({ erro: 'Este setor já está ativo.' });
+
+  const setorReativado = await SetorModel.reativar(req.params.id, req.usuario.empresa_id);
+  if (!setorReativado) {
+    return res.status(409).json({ erro: 'Não foi possível reativar o setor. Atualize a lista e tente novamente.' });
+  }
+  return res.json({ mensagem: 'Setor reativado com sucesso. O histórico foi preservado.', setor: setorReativado });
+}
+
 async function buscar(req, res) {
   const setor = await SetorModel.buscarPorId(req.params.id, req.usuario.empresa_id);
 
@@ -123,6 +139,37 @@ async function atualizar(req, res) {
   return res.json(setorAtualizado);
 }
 
+
+async function excluirDefinitivamente(req, res) {
+  const resultado = await SetorModel.excluirDefinitivamente(
+    req.params.id,
+    req.usuario.empresa_id
+  );
+
+  if (resultado.excluido) {
+    return res.json({
+      mensagem: 'Setor excluído definitivamente. Nenhum histórico de auditoria foi removido.',
+    });
+  }
+
+  if (resultado.motivo === 'nao_encontrado') {
+    return res.status(404).json({ erro: 'Setor não encontrado.' });
+  }
+
+  if (resultado.motivo === 'setor_ativo') {
+    return res.status(409).json({ erro: 'Somente setores desativados podem ser excluídos definitivamente.' });
+  }
+
+  if (resultado.motivo === 'possui_historico') {
+    return res.status(409).json({
+      erro: `Este setor possui ${resultado.totalAuditorias} auditoria(s) registrada(s). Para preservar o histórico, ele não pode ser excluído definitivamente. Você pode mantê-lo desativado ou reativá-lo.`,
+      totalAuditorias: resultado.totalAuditorias,
+    });
+  }
+
+  return res.status(409).json({ erro: 'Não foi possível excluir o setor. Atualize a lista e tente novamente.' });
+}
+
 async function remover(req, res) {
   const setor = await SetorModel.buscarPorId(req.params.id, req.usuario.empresa_id, false);
 
@@ -145,6 +192,9 @@ async function remover(req, res) {
 
 module.exports = {
   listar,
+  listarInativos,
+  reativar,
+  excluirDefinitivamente,
   listarAuditores,
   buscar,
   criar,
