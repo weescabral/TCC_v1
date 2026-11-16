@@ -3,10 +3,19 @@ const DashboardModel = require('../models/DashboardModel');
 async function resumo(req, res) {
   const empresaId = req.usuario.empresa_id;
 
-  const dados = await DashboardModel.resumo(empresaId);
+  const ehAuditor = req.usuario.perfil === 'auditor';
+  const dados = ehAuditor
+    ? await DashboardModel.resumoAuditor(empresaId, req.usuario.id, req.query.setorId || null)
+    : await DashboardModel.resumo(empresaId);
 
   return res.status(200).json({
     mensagem: 'Dashboard carregado com sucesso.',
+    perfil: req.usuario.perfil,
+    meusSetores: (dados.meusSetores || []).map((setor) => ({
+      id: Number(setor.id),
+      nome: setor.nome,
+    })),
+    setorSelecionado: dados.setorSelecionado || null,
 
     kpis: {
       indiceAtual: Number(dados.kpis.indiceAtual || 0),
@@ -28,6 +37,18 @@ async function resumo(req, res) {
     })),
 
     setoresAuditados: Number(dados.setoresAuditados || 0),
+    setoresComparados: Number(dados.setoresComparados || 0),
+    comparativoSensos: (dados.comparativoSensos || []).map((item) => ({
+      senso: item.senso,
+      nome: item.nome,
+      atual: Number(item.atual || 0),
+      anterior: Number(item.anterior || 0),
+      variacao: Number(item.variacao || 0),
+    })),
+    alertasPlanos: {
+      atrasados: Number(dados.alertasPlanos?.atrasados || 0),
+      proximos: Number(dados.alertasPlanos?.proximos || 0),
+    },
 
     porSetor: dados.porSetor.map((item) => ({
       id: item.id,

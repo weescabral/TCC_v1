@@ -15,7 +15,7 @@ function renderSidebar(activePage = "") {
   const usuario = getUsuarioLogado();
   const nome = usuario.nome || 'Usuário';
   const perfil = usuario.perfil === 'administrador' ? 'Administrador' : 'Auditor';
-  const foto = localStorage.getItem(`sensus_avatar_${usuario.id}`) || '';
+  const foto = usuario.foto_url || localStorage.getItem(`sensus_avatar_${usuario.id}`) || '';
   const avatar = foto
     ? `<img src="${foto}" alt="Foto do perfil">`
     : `<span>${obterIniciais(nome)}</span>`;
@@ -91,7 +91,7 @@ function renderSidebar(activePage = "") {
             <input id="profile-email" type="email" disabled>
             <label for="profile-photo">Foto do perfil</label>
             <input id="profile-photo" type="file" accept="image/png,image/jpeg,image/webp">
-            <small class="profile-help">PNG, JPG ou WEBP. A foto fica salva neste navegador.</small>
+            <small class="profile-help">PNG, JPG ou WEBP. A foto fica salva na conta e aparece para toda a equipe.</small>
             <div class="profile-modal-actions">
               <button class="btn-outline" type="button" onclick="logout()">Encerrar sessão</button>
               <button class="btn-primary" type="submit">Salvar alterações</button>
@@ -124,7 +124,6 @@ function configurarPerfil() {
     const reader = new FileReader();
     reader.onload = () => {
       document.getElementById('profile-preview').innerHTML = `<img src="${reader.result}" alt="Prévia da foto">`;
-      document.getElementById('profile-preview').dataset.photo = reader.result;
     };
     reader.readAsDataURL(arquivo);
   });
@@ -148,10 +147,22 @@ function configurarPerfil() {
       });
       const dados = await resposta.json();
       if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível atualizar o perfil.');
-      const atualizado = { ...getUsuarioLogado(), ...dados.usuario, nome: novoNome };
+      let atualizado = { ...getUsuarioLogado(), ...dados.usuario, nome: novoNome };
+      const arquivoFoto = document.getElementById('profile-photo').files?.[0];
+      if (arquivoFoto) {
+        const formularioFoto = new FormData();
+        formularioFoto.append('foto', arquivoFoto);
+        const respostaFoto = await fetch(`${obterApiUrl()}/auth/perfil/foto`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${localStorage.getItem('sensus_token')}` },
+          body: formularioFoto
+        });
+        const dadosFoto = await respostaFoto.json();
+        if (!respostaFoto.ok) throw new Error(dadosFoto.erro || 'Não foi possível salvar a foto.');
+        atualizado = { ...atualizado, ...dadosFoto.usuario };
+      }
       localStorage.setItem('sensus_usuario', JSON.stringify(atualizado));
-      const foto = document.getElementById('profile-preview').dataset.photo;
-      if (foto) localStorage.setItem(`sensus_avatar_${atualizado.id}`, foto);
+      localStorage.removeItem(`sensus_avatar_${atualizado.id}`);
       feedback.textContent = 'Perfil atualizado com sucesso!';
       setTimeout(() => window.location.reload(), 650);
     } catch (erro) {
@@ -335,6 +346,27 @@ function fecharPerfil() {
   modal.setAttribute('aria-hidden', 'true');
 }
 
+function escaparNotificacao(valor = '') {
+  return String(valor).replace(/[&<>"']/g, caractere => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[caractere]));
+}
+
+function formatarDataNotificacao(valor) {
+  if (!valor) return 'Agora';
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return 'Recentemente';
+  const diferenca = Math.max(0, Date.now() - data.getTime());
+  const minutos = Math.floor(diferenca / 60000);
+  if (minutos < 1) return 'Agora';
+  if (minutos < 60) return `Há ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `Há ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  if (dias < 7) return `Há ${dias} dia(s)`;
+  return data.toLocaleDateString('pt-BR');
+}
+
 function renderTopbar(title, subtitle, buttonText = "", buttonLink = "") {
   const topbar = document.getElementById("topbar");
   topbar.innerHTML = `
@@ -346,9 +378,17 @@ function renderTopbar(title, subtitle, buttonText = "", buttonLink = "") {
           <button class="icon-btn notification-button" id="notification-button" type="button" aria-label="Notificações" aria-expanded="false" onclick="alternarNotificacoes()">
             <i class="icon-bell"></i><span class="notification-dot" id="notification-dot"></span>
           </button>
-          <section class="notification-panel" id="notification-panel" aria-label="Notificações" hidden>
-            <div class="notification-panel-heading"><strong>Notificações</strong><button type="button" onclick="alternarNotificacoes(false)">×</button></div>
-            <div id="notification-list"><p class="notification-empty">Carregando notificações...</p></div>
+          <section class="notification-panel" id="notification-panel" aria-label="Central de notificações" hidden>
+            <div class="notification-panel-heading">
+              <div><strong>Central de notificações</strong><small id="notification-summary">Acompanhe os avisos do Sensus 5S.</small></div>
+              <button type="button" class="notification-close" onclick="alternarNotificacoes(false)" aria-label="Fechar notificações">×</button>
+            </div>
+            <div class="notification-panel-actions">
+              <span id="notification-count-label">Carregando...</span>
+              <button type="button" id="notification-mark-all" disabled>Marcar todas como lidas</button>
+            </div>
+            <div id="notification-list" class="notification-list"><p class="notification-empty">Carregando notificações...</p></div>
+            <div class="notification-panel-footer">Os avisos são atualizados automaticamente ao abrir esta central.</div>
           </section>
         </div>
         ${buttonText ? `<a href="${buttonLink}" class="btn-primary">${buttonText}</a>` : ""}
@@ -362,37 +402,110 @@ async function carregarNotificacoes() {
   const lista = document.getElementById('notification-list');
   if (!lista) return;
   try {
-    const resposta = await fetch(`${obterApiUrl()}/dashboard`, {
+    const resposta = await fetch(`${obterApiUrl()}/notificacoes`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('sensus_token')}` }
     });
-    if (!resposta.ok) throw new Error('Não foi possível consultar os avisos.');
     const dados = await resposta.json();
-    const pendencias = Number(dados.kpis?.planosPendentes || 0);
-    const setores = Array.isArray(dados.setoresPendentes) ? dados.setoresPendentes : [];
-    const avisos = [];
-    if (pendencias > 0) avisos.push({
-      titulo: `${pendencias} plano(s) de ação pendente(s)`,
-      detalhe: 'Existem ações que precisam de acompanhamento.',
-      link: './planos-acao.html',
-      icone: 'icon-clipboard-list'
-    });
-    if (setores.length > 0) avisos.push({
-      titulo: `${setores.length} setor(es) aguardando auditoria`,
-      detalhe: setores.slice(0, 3).map(setor => setor.nome).join(', ') + (setores.length > 3 ? ' e outros' : '') + '. Verifique a periodicidade das auditorias.',
-      link: './setores.html',
-      icone: 'icon-calendar-clock'
-    });
-    lista.innerHTML = avisos.length ? avisos.map(a => `
-      <a class="notification-item" href="${a.link}">
-        <span class="notification-item-icon"><i class="${a.icone}"></i></span>
-        <span><strong>${a.titulo}</strong><small>${a.detalhe}</small></span>
-      </a>`).join('') : '<p class="notification-empty">Tudo em dia! Nenhuma pendência encontrada.</p>';
+    if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível consultar as notificações.');
+
+    const items = Array.isArray(dados.items) ? dados.items : [];
+    const naoLidas = Number(dados.naoLidas || 0);
     const dot = document.getElementById('notification-dot');
-    if (dot) dot.classList.toggle('has-notifications', avisos.length > 0);
+    const botaoMarcarTodas = document.getElementById('notification-mark-all');
+    const contador = document.getElementById('notification-count-label');
+    const resumo = document.getElementById('notification-summary');
+    const botaoSino = document.getElementById('notification-button');
+
+    if (dot) {
+      dot.classList.toggle('has-notifications', naoLidas > 0);
+      dot.textContent = naoLidas > 9 ? '9+' : (naoLidas ? String(naoLidas) : '');
+    }
+    if (botaoSino) botaoSino.setAttribute('aria-label', naoLidas ? `Notificações, ${naoLidas} não lidas` : 'Notificações');
+    if (contador) contador.textContent = `${naoLidas} não lida(s)`;
+    if (resumo) resumo.textContent = items.length ? `${items.length} aviso(s) ativo(s) para sua conta.` : 'Nenhum aviso ativo no momento.';
+    if (botaoMarcarTodas) botaoMarcarTodas.disabled = naoLidas === 0;
+
+    const apresentacao = {
+      plano_atrasado: { icone: 'icon-alert-triangle', nivel: 'urgente', rotulo: 'Urgente' },
+      plano_proximo: { icone: 'icon-calendar-clock', nivel: 'atencao', rotulo: 'Atenção' },
+      auditoria_atrasada: { icone: 'icon-calendar-x', nivel: 'urgente', rotulo: 'Urgente' },
+      auditoria_proxima: { icone: 'icon-calendar-clock', nivel: 'atencao', rotulo: 'Atenção' },
+      auditoria_finalizada: { icone: 'icon-clipboard-check', nivel: 'sucesso', rotulo: 'Concluída' },
+      novos_planos: { icone: 'icon-list-checks', nivel: 'atencao', rotulo: 'Atenção' },
+      plano_atribuido: { icone: 'icon-user-check', nivel: 'atencao', rotulo: 'Atribuído' },
+    };
+
+    lista.innerHTML = items.length ? items.map(item => {
+      const estilo = apresentacao[item.tipo] || { icone: 'icon-bell', nivel: 'info', rotulo: 'Informação' };
+      const lida = Boolean(item.lida_em);
+      const href = escaparNotificacao(item.link || './dashboard.html');
+      return `
+        <a class="notification-item notification-${estilo.nivel} ${lida ? 'is-read' : 'is-unread'}"
+           href="${href}" data-notification-id="${Number(item.id)}">
+          <span class="notification-item-icon"><i class="${estilo.icone}"></i></span>
+          <span class="notification-item-content">
+            <span class="notification-item-title-row"><strong>${escaparNotificacao(item.titulo)}</strong><span class="notification-level">${estilo.rotulo}</span></span>
+            <small>${escaparNotificacao(item.mensagem)}</small>
+            <span class="notification-item-meta">${formatarDataNotificacao(item.criado_em)}${lida ? ' · Lida' : ' · Não lida'}</span>
+          </span>
+          ${lida ? '' : '<span class="notification-unread-mark" aria-label="Não lida"></span>'}
+        </a>`;
+    }).join('') : '<div class="notification-empty-state"><i class="icon-bell-off"></i><strong>Tudo em dia!</strong><span>Nenhuma notificação precisa da sua atenção.</span></div>';
   } catch (erro) {
-    lista.innerHTML = `<p class="notification-empty">Não foi possível carregar as notificações. Verifique se o servidor está conectado e tente novamente.</p>`;
+    lista.innerHTML = `<p class="notification-empty">${escaparNotificacao(erro.message || 'Não foi possível carregar as notificações.')}</p>`;
     console.error('Erro ao carregar notificações:', erro);
   }
+}
+
+async function marcarNotificacaoComoLida(id) {
+  const resposta = await fetch(`${obterApiUrl()}/notificacoes/${Number(id)}/lida`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${localStorage.getItem('sensus_token')}` }
+  });
+  if (!resposta.ok && resposta.status !== 404) {
+    const dados = await resposta.json().catch(() => ({}));
+    throw new Error(dados.erro || 'Não foi possível atualizar a notificação.');
+  }
+}
+
+async function marcarTodasNotificacoesComoLidas() {
+  const botao = document.getElementById('notification-mark-all');
+  if (botao) botao.disabled = true;
+  try {
+    const resposta = await fetch(`${obterApiUrl()}/notificacoes/lidas`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${localStorage.getItem('sensus_token')}` }
+    });
+    const dados = await resposta.json();
+    if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível atualizar as notificações.');
+    await carregarNotificacoes();
+  } catch (erro) {
+    if (window.sensusNotificar) window.sensusNotificar(erro.message, 'error');
+    if (botao) botao.disabled = false;
+  }
+}
+
+if (!window.__sensusNotificationHandlersRegistered) {
+  window.__sensusNotificationHandlersRegistered = true;
+  document.addEventListener('click', async (event) => {
+    const marcarTodas = event.target.closest('#notification-mark-all');
+    if (marcarTodas) {
+      event.preventDefault();
+      await marcarTodasNotificacoesComoLidas();
+      return;
+    }
+
+    const item = event.target.closest('.notification-item[data-notification-id]');
+    if (!item) return;
+    event.preventDefault();
+    const destino = item.getAttribute('href');
+    try {
+      if (item.classList.contains('is-unread')) await marcarNotificacaoComoLida(item.dataset.notificationId);
+    } catch (erro) {
+      console.error('Não foi possível marcar a notificação como lida:', erro);
+    }
+    window.location.href = destino;
+  });
 }
 
 function alternarNotificacoes(force) {
@@ -427,6 +540,7 @@ function alternarNotificacoes(force) {
 
   panel.hidden = !abrir;
   button.setAttribute('aria-expanded', String(abrir));
+  if (abrir) carregarNotificacoes();
 }
 
 function logout() {

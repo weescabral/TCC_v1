@@ -901,8 +901,30 @@ async function finalizarAuditoria() {
   elementos.resultadoPercentual.textContent =
     `${Number(percentual).toFixed(2)}%`;
 
-  elementos.resultadoClassificacao.textContent =
-    resultado.classificacao || 'Não informada';
+  const percentualNumerico = Number(percentual);
+  const faixaResultado = percentualNumerico >= 85
+    ? 'excelente'
+    : percentualNumerico >= 70
+      ? 'regular'
+      : percentualNumerico >= 50
+        ? 'atencao'
+        : 'critico';
+
+  const nomesFaixa = {
+    critico: 'Crítico',
+    atencao: 'Atenção',
+    regular: 'Regular',
+    excelente: 'Excelente'
+  };
+
+  elementos.resultadoClassificacao.textContent = nomesFaixa[faixaResultado];
+  elementos.resultadoFinal.classList.remove(
+    'faixa-critico',
+    'faixa-atencao',
+    'faixa-regular',
+    'faixa-excelente'
+  );
+  elementos.resultadoFinal.classList.add(`faixa-${faixaResultado}`);
 
   const duracaoSegundos = Number(resultado.duracao_segundos || 0);
   if (duracaoSegundos > 0) {
@@ -931,7 +953,16 @@ async function finalizarAuditoria() {
 
   if (dataResultado) {
     const dataFinal = resumo.finalizada_em || new Date();
-    dataResultado.textContent = new Date(dataFinal).toLocaleString('pt-BR');
+    dataResultado.textContent = new Date(dataFinal).toLocaleString('pt-BR', {
+      timeZone: 'America/Fortaleza',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
   }
 
   // Depois de concluir, não deixamos o usuário voltar a editar a auditoria.

@@ -38,3 +38,8 @@ Esta fase reutiliza os campos já adicionados pela migration `001_melhorias_seto
 - A inativação não apaga o registro nem o histórico.
 - A atribuição de setor usa o campo `setores.auditor_id` já existente.
 - A redefinição de senha feita por administrador não exige a senha atual do usuário; restrinja o acesso à tela de usuários a pessoas confiáveis.
+
+
+## Fotos de perfil compartilhadas
+
+As fotos de perfil são armazenadas no Cloudinary e vinculadas ao usuário pelas colunas `foto_url` e `foto_public_id`. Execute `backend/database/migrations/002_fotos_perfil_usuarios.sql` uma única vez. Após a atualização, cada usuário deve enviar novamente sua foto pelo modal **Editar perfil** para migrar imagens antigas que estavam somente no armazenamento local do navegador. A Gestão de usuários passa a exibir a foto de cada administrador e auditor, mantendo as iniciais como alternativa quando não houver foto cadastrada.

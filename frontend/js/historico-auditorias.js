@@ -84,10 +84,207 @@ async function carregarDetalhe(id, mostrarErro=true) {
       <div class="history-sensos">${sensos.map(s => `<div class="history-senso"><small>${esc(s.codigo || s.nome)}</small><h3 class="${classePercentual(s.percentual)}">${percentual(s.percentual)}</h3><small>${esc(s.classificacao || '')}</small></div>`).join('') || '<p>Resultados por senso não disponíveis.</p>'}</div>
       <p><strong>Observação geral:</strong> ${esc(a.observacao_geral || 'Nenhuma observação registrada.')}</p>
       ${a.prazo ? `<p style="margin-top:6px"><strong>Prazo:</strong> ${dataBR(a.prazo)}</p>` : ''}
-      <h3 style="margin-top:18px">Respostas por critério (${respostas.length})</h3>
-      ${respostas.length ? respostas.map(r => `<div class="history-answer"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(r.nome_senso || r.senso || 'Senso')} — ${esc(r.titulo || 'Critério')}</strong><span><strong>Nota:</strong> ${esc(r.nota)}/5</span></div><p style="margin-top:6px;color:#64748b">${esc(r.observacao || 'Sem observação.')}</p>${evidenciasHtml(r) ? `<div style="margin-top:8px"><strong>Evidências:</strong><ul>${evidenciasHtml(r)}</ul></div>` : ''}</div>`).join('') : '<p>Nenhuma resposta encontrada.</p>'}
-      <h3 style="margin-top:18px">Planos de ação (${planos.length})</h3>
-      ${planos.length ? `<ul>${planos.map(p => `<li style="margin:8px 0"><strong>${esc(p.criterio_titulo || 'Ação corretiva')}:</strong> ${esc(p.descricao)} — ${esc(p.status)} (prioridade ${esc(p.prioridade)})</li>`).join('')}</ul>` : '<p>Esta auditoria não gerou planos de ação.</p>'}
+      <section class="history-answers-section">
+        <h3 style="margin-top:18px">Respostas por Senso (${respostas.length})</h3>
+        <p class="history-answers-hint">Selecione um Senso para visualizar suas perguntas, notas, observações e evidências.</p>
+        ${respostas.length ? (() => {
+          const nomesCanonicos = {
+            1: 'Seiri — Utilização',
+            2: 'Seiton — Organização',
+            3: 'Seiso — Limpeza',
+            4: 'Seiketsu — Padronização',
+            5: 'Shitsuke — Disciplina'
+          };
+          const normalizarSenso = valor => String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+          const ordemPorTitulo = {
+  "existem itens sem uso no ambiente": 1,
+  "materiais obsoletos foram removidos": 1,
+  "ferramentas duplicadas foram eliminadas": 1,
+  "documentos antigos foram descartados": 1,
+  "itens pessoais são mínimos no ambiente": 1,
+  "há identificação de itens desnecessários": 1,
+  "sobras de materiais foram reduzidas": 1,
+  "equipamentos quebrados foram descartados": 1,
+  "estoques excessivos foram eliminados": 1,
+  "materiais sem função clara foram removidos": 1,
+  "itens têm locais definidos": 2,
+  "ferramentas são guardadas após uso": 2,
+  "etiquetas de identificação estão visíveis": 2,
+  "a organização facilita o acesso rápido": 2,
+  "o layout do espaço é otimizado": 2,
+  "materiais são organizados por frequência de uso": 2,
+  "cores e padrões ajudam na identificação": 2,
+  "há sinalização clara nos espaços": 2,
+  "caminhos de circulação estão livres": 2,
+  "a posição dos itens é lógica e intuitiva": 2,
+  "o ambiente está limpo diariamente": 3,
+  "não há sujeira acumulada": 3,
+  "ferramentas são limpas após o uso": 3,
+  "máquinas estão livres de poeira": 3,
+  "a falta de limpeza é rapidamente detectada": 3,
+  "há rotina de limpeza definida": 3,
+  "os responsáveis pela limpeza são definidos": 3,
+  "lixeiras estão disponíveis e são adequadas": 3,
+  "resíduos são descartados corretamente": 3,
+  "equipamentos são inspecionados durante a limpeza": 3,
+  "existem padrões definidos de organização": 4,
+  "procedimentos estão documentados": 4,
+  "checklists são utilizados": 4,
+  "treinamento é realizado regularmente": 4,
+  "padrões visuais são aplicados": 4,
+  "sinalizações são padronizadas": 4,
+  "normas são seguidas por todos": 4,
+  "auditorias internas são feitas": 4,
+  "os processos são consistentes": 4,
+  "o ambiente permanece organizado ao longo do tempo": 4,
+  "funcionários seguem as regras espontaneamente": 5,
+  "há disciplina no cumprimento das normas": 5,
+  "a cultura 5s é disseminada": 5,
+  "treinamentos contínuos acontecem": 5,
+  "a liderança dá exemplo": 5,
+  "há comprometimento da equipe": 5,
+  "as regras são cumpridas sem cobrança constante": 5,
+  "auditorias são bem aceitas": 5,
+  "a melhoria contínua é incentivada": 5,
+  "há reconhecimento de boas práticas": 5
+};
+          const grupos = new Map();
+          // Inicializa os cinco grupos usando os resultados consolidados da auditoria.
+          // Assim, nenhum Senso desaparece mesmo que uma resposta antiga tenha metadados incompletos.
+          sensos.forEach(s => {
+            const ordem = Number(s.ordem) || 99;
+            const id = `ordem-${ordem}`;
+            grupos.set(id, { label: nomesCanonicos[ordem] || `${s.codigo || 'Senso'} — ${s.nome || ''}`, ordem, itens: [] });
+          });
+          respostas.forEach(r => {
+            const tituloNormalizado = normalizarSenso(r.titulo);
+            const ordemPorTituloEncontrada = ordemPorTitulo[tituloNormalizado];
+            const ordem = ordemPorTituloEncontrada || Number(r.ordem_senso) || 99;
+            const grupoResultado = sensos.find(s => r.senso_id != null && String(s.senso_id) === String(r.senso_id));
+            const id = `ordem-${ordemPorTituloEncontrada || Number(grupoResultado?.ordem) || ordem}`;
+            const label = nomesCanonicos[ordem] || (r.senso && r.nome_senso ? `${r.senso} — ${r.nome_senso}` : r.nome_senso || r.senso || 'Senso não identificado');
+            if (!grupos.has(id)) grupos.set(id, { label, ordem, itens: [] });
+            grupos.get(id).itens.push(r);
+          });
+          const gruposOrdenados = [...grupos.entries()].sort((a, b) => a[1].ordem - b[1].ordem);
+          return gruposOrdenados.map(([chave, grupo]) => {
+            const notas = grupo.itens.map(r => Number(r.nota)).filter(n => Number.isFinite(n));
+            const media = notas.length ? (notas.reduce((s, n) => s + n, 0) / notas.length).toFixed(1) : '—';
+            return `<details class="history-senso-accordion">
+              <summary>
+                <span class="history-senso-summary-main"><strong>${esc(grupo.label)}</strong><small>${grupo.itens.length} ${grupo.itens.length === 1 ? 'pergunta' : 'perguntas'} · Média ${media}/5</small></span>
+                <span class="history-senso-chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="history-senso-accordion-content">
+                ${grupo.itens.map(r => `<article class="history-answer">
+                  <div class="history-answer-heading"><strong>${esc(r.titulo || 'Critério')}</strong><span class="history-answer-score"><strong>Nota:</strong> ${esc(r.nota)}/5</span></div>
+                  <p class="history-answer-observation">${esc(r.observacao || 'Sem observação.')}</p>
+                  ${evidenciasHtml(r) ? `<div class="history-answer-evidence"><strong>Evidências:</strong><ul>${evidenciasHtml(r)}</ul></div>` : ''}
+                </article>`).join('')}
+              </div>
+            </details>`;
+          }).join('');
+        })() : '<p>Nenhuma resposta encontrada.</p>'}
+      </section>
+      <section class="history-answers-section history-plans-section">
+        <h3 style="margin-top:18px">Planos de ação (${planos.length})</h3>
+        <p class="history-answers-hint">Expanda um Senso para consultar as ações vinculadas a ele.</p>
+        ${planos.length ? (() => {
+          const nomesCanonicos = {
+            1: 'Seiri — Utilização',
+            2: 'Seiton — Organização',
+            3: 'Seiso — Limpeza',
+            4: 'Seiketsu — Padronização',
+            5: 'Shitsuke — Disciplina'
+          };
+          const normalizarSenso = valor => String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+          const ordemPorTitulo = {
+  "existem itens sem uso no ambiente": 1,
+  "materiais obsoletos foram removidos": 1,
+  "ferramentas duplicadas foram eliminadas": 1,
+  "documentos antigos foram descartados": 1,
+  "itens pessoais são mínimos no ambiente": 1,
+  "há identificação de itens desnecessários": 1,
+  "sobras de materiais foram reduzidas": 1,
+  "equipamentos quebrados foram descartados": 1,
+  "estoques excessivos foram eliminados": 1,
+  "materiais sem função clara foram removidos": 1,
+  "itens têm locais definidos": 2,
+  "ferramentas são guardadas após uso": 2,
+  "etiquetas de identificação estão visíveis": 2,
+  "a organização facilita o acesso rápido": 2,
+  "o layout do espaço é otimizado": 2,
+  "materiais são organizados por frequência de uso": 2,
+  "cores e padrões ajudam na identificação": 2,
+  "há sinalização clara nos espaços": 2,
+  "caminhos de circulação estão livres": 2,
+  "a posição dos itens é lógica e intuitiva": 2,
+  "o ambiente está limpo diariamente": 3,
+  "não há sujeira acumulada": 3,
+  "ferramentas são limpas após o uso": 3,
+  "máquinas estão livres de poeira": 3,
+  "a falta de limpeza é rapidamente detectada": 3,
+  "há rotina de limpeza definida": 3,
+  "os responsáveis pela limpeza são definidos": 3,
+  "lixeiras estão disponíveis e são adequadas": 3,
+  "resíduos são descartados corretamente": 3,
+  "equipamentos são inspecionados durante a limpeza": 3,
+  "existem padrões definidos de organização": 4,
+  "procedimentos estão documentados": 4,
+  "checklists são utilizados": 4,
+  "treinamento é realizado regularmente": 4,
+  "padrões visuais são aplicados": 4,
+  "sinalizações são padronizadas": 4,
+  "normas são seguidas por todos": 4,
+  "auditorias internas são feitas": 4,
+  "os processos são consistentes": 4,
+  "o ambiente permanece organizado ao longo do tempo": 4,
+  "funcionários seguem as regras espontaneamente": 5,
+  "há disciplina no cumprimento das normas": 5,
+  "a cultura 5s é disseminada": 5,
+  "treinamentos contínuos acontecem": 5,
+  "a liderança dá exemplo": 5,
+  "há comprometimento da equipe": 5,
+  "as regras são cumpridas sem cobrança constante": 5,
+  "auditorias são bem aceitas": 5,
+  "a melhoria contínua é incentivada": 5,
+  "há reconhecimento de boas práticas": 5
+};
+          const grupos = new Map();
+          sensos.forEach(s => {
+            const ordem = Number(s.ordem) || 99;
+            const id = `ordem-${ordem}`;
+            grupos.set(id, { label: nomesCanonicos[ordem] || `${s.codigo || 'Senso'} — ${s.nome || ''}`, ordem, itens: [] });
+          });
+          planos.forEach(p => {
+            const ordemTitulo = ordemPorTitulo[normalizarSenso(p.criterio_titulo)];
+            const ordem = ordemTitulo || Number(p.ordem_senso) || 99;
+            const resultado = sensos.find(s => p.criterio_senso_id != null && String(s.senso_id) === String(p.criterio_senso_id));
+            const id = `ordem-${ordemTitulo || Number(resultado?.ordem) || ordem}`;
+            const label = nomesCanonicos[ordem] || (p.senso && p.nome_senso ? `${p.senso} — ${p.nome_senso}` : p.nome_senso || p.senso || 'Outros planos');
+            if (!grupos.has(id)) grupos.set(id, { label, ordem, itens: [] });
+            grupos.get(id).itens.push(p);
+          });
+          return [...grupos.entries()]
+            .sort((a, b) => a[1].ordem - b[1].ordem || a[0].localeCompare(b[0], 'pt-BR', { numeric: true }))
+            .map(([idSenso, grupo]) => `<details class="history-senso-accordion history-plan-accordion">
+              <summary>
+                <span class="history-senso-summary-main"><strong>${esc(grupo.label)}</strong><small>${grupo.itens.length} ${grupo.itens.length === 1 ? 'plano de ação' : 'planos de ação'}</small></span>
+                <span class="history-senso-chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="history-senso-accordion-content">
+                ${grupo.itens.map(p => `<article class="history-answer history-plan-item">
+                  <div class="history-answer-heading">
+                    <strong>${esc(p.criterio_titulo || 'Ação corretiva')}</strong>
+                    <span class="history-plan-status">${esc(p.status || 'Pendente')}</span>
+                  </div>
+                  <p class="history-answer-observation">${esc(p.descricao || 'Sem descrição registrada.')}</p>
+                  <div class="history-plan-meta"><span>Prioridade: <strong>${esc(p.prioridade || 'Não definida')}</strong></span>${p.responsavel_nome ? `<span>Responsável: <strong>${esc(p.responsavel_nome)}</strong></span>` : ''}</div>
+                </article>`).join('')}
+              </div>
+            </details>`).join('');
+        })() : '<p>Esta auditoria não gerou planos de ação.</p>'}
+      </section>
       <div class="history-meta"><span><strong>Iniciada:</strong> ${dataBR(a.iniciada_em || a.data_auditoria)}</span><span><strong>Finalizada:</strong> ${dataBR(a.finalizada_em)}</span><span><strong>Duração:</strong> ${a.duracao_segundos != null ? `${Math.floor(Number(a.duracao_segundos)/60)} min` : '—'}</span></div>`;
   } catch (e) { alvo.innerHTML = `<p style="color:#b91c1c">${esc(e.message)}</p>`; if (mostrarErro) console.error(e); }
 }

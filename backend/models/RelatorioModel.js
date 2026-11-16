@@ -126,8 +126,30 @@ async function periodico(empresaId, inicio, fim, usuario) {
        AND a.data_auditoria >= ? AND a.data_auditoria < DATE_ADD(?, INTERVAL 1 DAY) ${filtro}
      GROUP BY s.id, s.nome ORDER BY media DESC`, params
   );
+  const [porSenso] = await db.query(
+    `SELECT ss.codigo AS senso, ss.nome,
+            ROUND((SUM(r.nota * COALESCE(r.peso_aplicado, c.peso, 1)) /
+              NULLIF(SUM(5 * COALESCE(r.peso_aplicado, c.peso, 1)), 0)) * 100, 2) AS media
+     FROM auditorias a
+     INNER JOIN setores s ON s.id = a.setor_id
+     INNER JOIN respostas_auditoria r ON r.auditoria_id = a.id
+     INNER JOIN criterios_5s c ON c.id = r.criterio_id
+     INNER JOIN sensos_5s ss ON ss.id = c.senso_id
+     WHERE a.empresa_id = ? AND a.status = 'finalizada'
+       AND a.data_auditoria >= ? AND a.data_auditoria < DATE_ADD(?, INTERVAL 1 DAY) ${filtro}
+     GROUP BY ss.id, ss.codigo, ss.nome, ss.ordem ORDER BY ss.ordem`, params
+  );
+  const [planosResumo] = await db.query(
+    `SELECT pa.status, COUNT(*) AS total
+     FROM planos_acao pa
+     INNER JOIN auditorias a ON a.id = pa.auditoria_id
+     INNER JOIN setores s ON s.id = a.setor_id
+     WHERE a.empresa_id = ? AND a.status = 'finalizada'
+       AND a.data_auditoria >= ? AND a.data_auditoria < DATE_ADD(?, INTERVAL 1 DAY) ${filtro}
+     GROUP BY pa.status ORDER BY pa.status`, params
+  );
   const media = auditorias.length ? auditorias.reduce((s,a)=>s+Number(a.percentual_geral||0),0)/auditorias.length : 0;
-  return { inicio, fim, auditorias, porMes, porSetor, indicadores: { totalAuditorias: auditorias.length, media: Number(media.toFixed(2)) } };
+  return { inicio, fim, auditorias, porMes, porSetor, porSenso, planosResumo, indicadores: { totalAuditorias: auditorias.length, media: Number(media.toFixed(2)) } };
 }
 
 async function gerar(tipo, filtros, empresaId, usuario) {

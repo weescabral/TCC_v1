@@ -7,6 +7,7 @@
 
   <link rel="stylesheet" href="../css/styles.css">
   <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -84,10 +85,16 @@
             </button>
           </div>
           <div id="listaSetores" class="sector-grid">
-            <div class="card">
-              <p>Carregando setores...</p>
-            </div>
+            <div class="card"><p>Carregando setores...</p></div>
           </div>
+          <section id="sectorHistoryInline" class="card sector-history-inline" hidden aria-live="polite">
+            <div class="card-heading">
+              <div><small class="eyebrow">ACOMPANHAMENTO HISTÓRICO</small><h2 id="sectorHistoryInlineTitle">Evolução do setor</h2>
+                <p>Desempenho do setor ao longo das auditorias finalizadas.</p></div>
+              <button type="button" class="btn-outline" id="closeSectorHistoryInline">Fechar</button>
+            </div>
+            <div id="sectorHistoryInlineBody"></div>
+          </section>
         </div>
       </section>
 
@@ -101,6 +108,7 @@
     const admin = usuario.perfil === "administrador";
     if (!admin) {
       document.getElementById("cadastroSetor").hidden = true;
+      document.querySelector(".page-grid").classList.add("auditor-view");
       document.querySelector(".section-title").textContent = "Meus Setores";
     }
     renderTopbar(

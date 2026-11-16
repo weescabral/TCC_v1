@@ -65,10 +65,13 @@
     const current = JSON.parse(localStorage.getItem('sensus_usuario') || '{}');
     $('usersList').innerHTML = filtrados.length ? filtrados.map(u => {
       const iniciais = String(u.nome || 'U').trim().split(/\s+/).slice(0,2).map(x => x[0]).join('').toUpperCase();
+      const avatar = u.foto_url
+        ? `<img src="${esc(u.foto_url)}" alt="Foto de ${esc(u.nome)}" loading="lazy">`
+        : esc(iniciais);
       const perfil = u.perfil === 'administrador' ? 'Administrador' : 'Auditor';
       if (abaAtual === 'inativos') {
         return `<article class="user-row user-row-inactive">
-          <div class="user-avatar">${esc(iniciais)}</div>
+          <div class="user-avatar">${avatar}</div>
           <div class="user-main">
             <strong>${esc(u.nome)}</strong>
             <span>${esc(u.email)}</span>
@@ -85,7 +88,7 @@
         </article>`;
       }
       return `<article class="user-row">
-        <div class="user-avatar">${esc(iniciais)}</div>
+        <div class="user-avatar">${avatar}</div>
         <div class="user-main">
           <strong>${esc(u.nome)}</strong>
           <span>${esc(u.email)}</span>

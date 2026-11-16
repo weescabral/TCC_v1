@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 async function listarPorEmpresa(empresaId, status = 'ativos') {
   const [rows] = await db.query(
-    `SELECT u.id, u.empresa_id, u.nome, u.email, u.perfil, u.ativo, u.motivo_inativacao, u.inativado_em, u.criado_em,
+    `SELECT u.id, u.empresa_id, u.nome, u.email, u.perfil, u.foto_url, u.ativo, u.motivo_inativacao, u.inativado_em, u.criado_em,
             (SELECT COUNT(*) FROM setores s WHERE s.auditor_id = u.id AND s.empresa_id = u.empresa_id AND s.ativo = TRUE) AS setores_atribuidos
      FROM usuarios u
      WHERE u.empresa_id = ? AND u.ativo = ?
@@ -14,7 +14,7 @@ async function listarPorEmpresa(empresaId, status = 'ativos') {
 
 async function buscarPorId(id, empresaId) {
   const [rows] = await db.query(
-    `SELECT id, empresa_id, nome, email, perfil, ativo, motivo_inativacao, inativado_em, criado_em
+    `SELECT id, empresa_id, nome, email, perfil, foto_url, ativo, motivo_inativacao, inativado_em, criado_em
      FROM usuarios
      WHERE id = ? AND empresa_id = ?
      LIMIT 1`,

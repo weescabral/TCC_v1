@@ -1,7 +1,10 @@
 function classificarPercentual(percentual) {
-  if (percentual >= 90) return 'excelente';
-  if (percentual >= 75) return 'bom';
-  if (percentual >= 60) return 'regular';
+  const valor = Number(percentual) || 0;
+
+  if (valor >= 85) return 'excelente';
+  if (valor >= 70) return 'regular';
+  if (valor >= 50) return 'atencao';
   return 'critico';
 }
+
 module.exports = { classificarPercentual };

@@ -4,6 +4,11 @@ let graficoEvolucao;
 let graficoSensos;
 let graficoRadar;
 let graficoPlanos;
+let graficoComparativoSensos;
+let dadosDashboardAtual = null;
+let setorDashboardSelecionado = null;
+let carregamentoDashboardEmAndamento = false;
+let perfilDashboardAtual = null;
 
 function obterToken() {
   return localStorage.getItem('sensus_token');
@@ -25,6 +30,20 @@ function corDesempenho(valor) {
   return '#16a34a';
 }
 
+function aplicarBrilhoIndicador(elemento, percentual) {
+  const cartao = elemento?.closest('.stat-card');
+  if (!cartao) return;
+  cartao.classList.remove('glow-critical', 'glow-low', 'glow-medium', 'glow-good');
+  const faixa = classeDesempenho(percentual);
+  const classes = {
+    'performance-critical': 'glow-critical',
+    'performance-low': 'glow-low',
+    'performance-medium': 'glow-medium',
+    'performance-good': 'glow-good',
+  };
+  cartao.classList.add(classes[faixa] || 'glow-medium');
+}
+
 function formatarPercentual(valor) {
   return `${Number(valor || 0).toFixed(1)}%`;
 }
@@ -43,11 +62,19 @@ function formatarData(data) {
 
 function obterClassificacao(percentual) {
   const valor = Number(percentual || 0);
-  if (valor >= 85) return { texto: 'Excelente', classe: 'success' };
-  if (valor >= 70) return { texto: 'Regular', classe: 'warning' };
-  if (valor >= 50) return { texto: 'Atenção', classe: 'warning' };
-  if (valor > 0) return { texto: 'Crítico', classe: 'danger' };
+  if (valor >= 85) return { texto: 'Excelente', classe: 'good' };
+  if (valor >= 70) return { texto: 'Regular', classe: 'low' };
+  if (valor >= 50) return { texto: 'Atenção', classe: 'attention' };
+  if (valor > 0) return { texto: 'Crítico', classe: 'critical' };
   return { texto: 'Sem dados', classe: 'neutral' };
+}
+
+function atualizarBadgeStatus(id, percentual, textoPersonalizado = null) {
+  const badge = document.getElementById(id);
+  if (!badge) return;
+  const status = obterClassificacao(percentual);
+  badge.className = `status-pill status-${status.classe}`;
+  badge.textContent = textoPersonalizado || status.texto;
 }
 
 async function verificarPrimeiroAcesso() {
@@ -73,7 +100,28 @@ async function verificarPrimeiroAcesso() {
   }
 }
 
-async function carregarDashboard() {
+function aplicarVisibilidadeCardsAdministrativos(perfilAutenticado = null) {
+  let perfil = perfilAutenticado || '';
+  try {
+    if (!perfil) perfil = JSON.parse(localStorage.getItem('sensus_usuario') || '{}').perfil || '';
+  } catch (erro) {
+    console.warn('Não foi possível identificar o perfil do usuário:', erro);
+  }
+
+  const ehAdministrador = perfil === 'administrador';
+  document.body.classList.toggle('dashboard-auditor', !ehAdministrador);
+  document.querySelectorAll('.admin-only-dashboard').forEach((card) => {
+    card.classList.toggle('escondido', !ehAdministrador);
+  });
+  document.getElementById('dashboardAuditorToolbar')?.classList.toggle('escondido', ehAdministrador);
+
+  return ehAdministrador;
+}
+
+async function carregarDashboard(setorId = null) {
+  if (carregamentoDashboardEmAndamento) return;
+  carregamentoDashboardEmAndamento = true;
+  let ehAdministrador = aplicarVisibilidadeCardsAdministrativos(perfilDashboardAtual);
   const temaEscuro = document.documentElement.dataset.theme === 'escuro';
   if (window.Chart) {
     Chart.defaults.color = temaEscuro ? '#cbd5e1' : '#64748b';
@@ -92,11 +140,12 @@ async function carregarDashboard() {
     const redirecionandoParaConfiguracao = await verificarPrimeiroAcesso();
     if (redirecionandoParaConfiguracao) return;
 
-    const resposta = await fetch(`${API_URL}/dashboard`, {
+    const parametrosDashboard = !ehAdministrador && setorId && setorId !== 'geral'
+      ? `?setorId=${encodeURIComponent(setorId)}`
+      : '';
+    const resposta = await fetch(`${API_URL}/dashboard${parametrosDashboard}`, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (resposta.status === 401) {
@@ -113,15 +162,27 @@ async function carregarDashboard() {
       );
     }
 
+    dadosDashboardAtual = dados;
+    perfilDashboardAtual = dados.perfil || perfilDashboardAtual;
+    ehAdministrador = perfilDashboardAtual === 'administrador';
+    aplicarVisibilidadeCardsAdministrativos(perfilDashboardAtual);
+    if (!ehAdministrador) {
+      setorDashboardSelecionado = dados.setorSelecionado ? String(dados.setorSelecionado) : 'geral';
+      atualizarSeletorSetoresAuditor(dados);
+    }
     window.dashboardSetoresAuditados = Number(dados.setoresAuditados || 0);
     preencherKPIs(dados.kpis);
-    renderizarSetoresPendentes(dados.setoresPendentes || []);
+    if (ehAdministrador) renderizarSetoresPendentes(dados.setoresPendentes || []);
     renderizarEvolucao(dados.evolucao);
     renderizarSensos(dados.porSenso);
     renderizarRadar(dados.porSenso);
-    renderizarRanking(dados.porSetor);
+    if (ehAdministrador) renderizarRanking(dados.porSetor);
     renderizarPlanos(dados.planos);
+    preencherFiltroComparacao(dados.porSetor || []);
+    renderizarComparativoSensos(dados.comparativoSensos || [], dados.setoresComparados || 0);
+    renderizarHistoricoSetores(dados.evolucao || [], dados.porSetor || []);
     preencherDiagnostico(dados);
+    atualizarTextosDashboardPorPerfil(dados, ehAdministrador);
   } catch (erro) {
     console.error('Erro ao carregar Dashboard:', erro);
 
@@ -133,19 +194,89 @@ async function carregarDashboard() {
 
     document.getElementById('diagnosticoStatus').className =
       'warning';
+  } finally {
+    carregamentoDashboardEmAndamento = false;
   }
 }
 
-function preencherKPIs(kpis = {}) {
-  const classificacao = obterClassificacao(kpis.indiceAtual);
+function atualizarSeletorSetoresAuditor(dados) {
+  const toolbar = document.getElementById('dashboardAuditorToolbar');
+  const select = document.getElementById('dashboardSetorSelect');
+  const descricao = document.getElementById('dashboardAuditorDescricao');
+  if (!toolbar || !select) return;
+  const setores = dados.meusSetores || [];
+  toolbar.classList.remove('escondido');
+  if (!setores.length) {
+    select.innerHTML = '<option value="geral">Nenhum setor atribuído</option>';
+    select.disabled = true;
+    if (descricao) descricao.textContent = 'Você ainda não possui setores ativos atribuídos. Solicite ao administrador a vinculação de um setor.';
+    return;
+  }
+  select.disabled = false;
+  const opcoes = setores.length > 1
+    ? '<option value="geral">Visão consolidada dos meus setores</option>'
+    : '';
+  select.innerHTML = opcoes + setores.map(setor =>
+    `<option value="${Number(setor.id)}">${escaparHtml(setor.nome)}</option>`
+  ).join('');
+  const valor = dados.setorSelecionado ? String(dados.setorSelecionado) : 'geral';
+  if ([...select.options].some(option => option.value === valor)) select.value = valor;
+  if (descricao) {
+    const setor = setores.find(item => String(item.id) === valor);
+    descricao.textContent = setor
+      ? `Indicadores, auditorias e planos de ação do setor ${setor.nome}.`
+      : `Visão consolidada de ${setores.length} setores sob sua responsabilidade.`;
+  }
+}
 
+function atualizarTextosDashboardPorPerfil(dados, ehAdministrador) {
+  if (ehAdministrador) return;
+  const setorSelecionado = (dados.meusSetores || []).find(item => Number(item.id) === Number(dados.setorSelecionado));
+  const historicoTitulo = document.querySelector('.dashboard-sector-history .card-heading h3');
+  const historicoDescricao = document.querySelector('.dashboard-sector-history .card-heading p');
+  if (historicoTitulo) historicoTitulo.textContent = setorSelecionado ? `Histórico de ${setorSelecionado.nome}` : 'Histórico dos meus setores';
+  if (historicoDescricao) historicoDescricao.textContent = setorSelecionado
+    ? `Acompanhe a trajetória do índice 5S de ${setorSelecionado.nome}.`
+    : 'Acompanhe a trajetória do índice 5S dos setores atribuídos a você.';
+  const comparacaoTitulo = document.querySelector('.dashboard-comparison-card .card-heading h3');
+  const comparacaoDescricao = document.querySelector('.dashboard-comparison-card .card-heading p');
+  if (comparacaoTitulo) comparacaoTitulo.textContent = setorSelecionado ? `Evolução dos cinco sensos — ${setorSelecionado.nome}` : 'Evolução dos cinco sensos';
+  if (comparacaoDescricao) comparacaoDescricao.textContent = setorSelecionado
+    ? 'Compare a auditoria atual com a auditoria anterior deste setor.'
+    : 'Compare os resultados dos setores sob sua responsabilidade.';
+  const planosTitulo = document.querySelector('.planos-card .card-heading h3');
+  const planosDescricao = document.querySelector('.planos-card .card-heading p');
+  if (planosTitulo) planosTitulo.textContent = setorSelecionado ? `Planos de ação — ${setorSelecionado.nome}` : 'Planos de ação dos meus setores';
+  if (planosDescricao) planosDescricao.textContent = 'Distribuição dos planos por status nos setores atribuídos a você.';
+
+  const descricoes = document.querySelectorAll('.dashboard-kpis .stat-card p');
+  if (descricoes[0]) descricoes[0].textContent = setorSelecionado
+    ? 'Resultado da auditoria finalizada mais recente deste setor.'
+    : 'Média dos resultados mais recentes dos setores sob sua responsabilidade.';
+  if (descricoes[1]) descricoes[1].textContent = setorSelecionado
+    ? 'Média das auditorias finalizadas neste setor no ano.'
+    : 'Média das auditorias finalizadas no ano nos seus setores.';
+  if (descricoes[3]) descricoes[3].textContent = 'Setores atribuídos que já possuem auditoria finalizada.';
+  if (descricoes[4]) descricoes[4].textContent = setorSelecionado
+    ? 'Ciclos concluídos neste setor.'
+    : 'Ciclos concluídos nos seus setores.';
+  if (descricoes[5]) descricoes[5].textContent = 'Ações que exigem acompanhamento nos seus setores.';
+  const diagnosticoLabel = document.querySelector('.dashboard-alert .diagnostico-label small');
+  if (diagnosticoLabel) diagnosticoLabel.textContent = setorSelecionado ? 'Diagnóstico do Setor' : 'Diagnóstico dos Meus Setores';
+}
+
+function preencherKPIs(kpis = {}) {
   const indiceElemento = document.getElementById('indiceAtual');
   indiceElemento.textContent = formatarPercentual(kpis.indiceAtual);
   indiceElemento.className = classeDesempenho(kpis.indiceAtual);
+  aplicarBrilhoIndicador(indiceElemento, kpis.indiceAtual);
+  atualizarBadgeStatus('badgeIndiceAtual', kpis.indiceAtual);
 
   const mediaElemento = document.getElementById('mediaGeral');
   mediaElemento.textContent = formatarPercentual(kpis.mediaGeral);
   mediaElemento.className = classeDesempenho(kpis.mediaGeral);
+  aplicarBrilhoIndicador(mediaElemento, kpis.mediaGeral);
+  atualizarBadgeStatus('badgeMediaGeral', kpis.mediaGeral);
 
   document.getElementById('totalAuditorias').textContent =
     Number(kpis.totalAuditorias || 0);
@@ -154,21 +285,24 @@ function preencherKPIs(kpis = {}) {
   const setoresAuditados = Number(window.dashboardSetoresAuditados || 0);
   document.getElementById('coberturaSetores').textContent =
     `${setoresAuditados}/${totalSetores}`;
+  const coberturaCompleta = totalSetores > 0 && setoresAuditados >= totalSetores;
+  atualizarBadgeStatus('badgeCobertura', coberturaCompleta ? 100 : (totalSetores ? setoresAuditados / totalSetores * 100 : 0),
+    coberturaCompleta ? 'Completa' : (setoresAuditados > 0 ? 'Parcial' : 'Sem cobertura'));
 
   document.getElementById('planosPendentes').textContent =
     Number(kpis.planosPendentes || 0);
 
-  document.getElementById('melhorScore').textContent =
-    formatarPercentual(kpis.melhorScore);
+  const melhorElemento = document.getElementById('melhorScore');
+  melhorElemento.textContent = formatarPercentual(kpis.melhorScore);
+  melhorElemento.className = classeDesempenho(kpis.melhorScore);
+  aplicarBrilhoIndicador(melhorElemento, kpis.melhorScore);
+  atualizarBadgeStatus('badgeMelhorScore', kpis.melhorScore);
 
-  document.getElementById('piorScoreTexto').textContent =
-    `Pior resultado: ${formatarPercentual(kpis.piorScore)}`;
+  const piorElemento = document.getElementById('piorScoreTexto');
+  piorElemento.textContent = `Pior resultado: ${formatarPercentual(kpis.piorScore)}`;
+  piorElemento.className = classeDesempenho(kpis.piorScore);
+  atualizarBadgeStatus('badgePiorScore', kpis.piorScore);
 
-  const classificacaoAtual =
-    document.getElementById('classificacaoAtual');
-
-  classificacaoAtual.textContent = classificacao.texto;
-  classificacaoAtual.className = classificacao.classe;
 }
 
 function renderizarEvolucao(evolucao = []) {
@@ -189,14 +323,11 @@ function renderizarEvolucao(evolucao = []) {
           label: 'Índice geral',
           data: evolucao.map((item) => Number(item.score || 0)),
           borderWidth: 3,
+          borderColor: '#38bdf8',
           tension: 0.35,
           fill: true,
           segment: {
-            borderColor: (ctx) => {
-              const anterior = Number(ctx.p0?.parsed?.y ?? ctx.p1?.parsed?.y ?? 0);
-              const proximo = Number(ctx.p1?.parsed?.y ?? anterior);
-              return corDesempenho((anterior + proximo) / 2);
-            }
+            borderColor: '#38bdf8',
           },
           pointBackgroundColor: (ctx) => corDesempenho(ctx.parsed?.y ?? ctx.raw ?? 0),
           pointBorderColor: document.documentElement.dataset.theme === 'escuro' ? '#182437' : '#ffffff',
@@ -306,10 +437,8 @@ function renderizarRadar(porSenso = []) {
           data: porSenso.map((item) => Number(item.media || 0)),
           borderWidth: 2,
           fill: true,
-          borderColor: document.documentElement.dataset.theme === 'escuro' ? '#fbbf24' : '#0b2a52',
-          backgroundColor: document.documentElement.dataset.theme === 'escuro'
-            ? 'rgba(251, 191, 36, 0.16)'
-            : 'rgba(11, 42, 82, 0.10)',
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56, 189, 248, 0.16)',
           pointBackgroundColor: porSenso.map(item => corDesempenho(item.media)),
           pointBorderColor: '#ffffff',
         },
@@ -446,6 +575,135 @@ function renderizarSetoresPendentes(setores = []) {
   }).join('');
 }
 
+
+function preencherFiltroComparacao(setores = []) {
+  const select = document.getElementById('filtroComparacaoSetor');
+  if (!select) return;
+  const valorAtual = select.value || 'geral';
+  const perfilAtual = perfilDashboardAtual || JSON.parse(localStorage.getItem('sensus_usuario') || '{}').perfil;
+  const opcaoGeral = perfilAtual === 'auditor' ? 'Todos os meus setores — visão consolidada' : 'Todos os setores ativos — visão geral';
+  select.innerHTML = `<option value="geral">${opcaoGeral}</option>` +
+    setores.map(setor => `<option value="${Number(setor.id)}">${escaparHtml(setor.nome)}</option>`).join('');
+  if ([...select.options].some(option => option.value === valorAtual)) select.value = valorAtual;
+}
+
+function renderizarGraficoComparativo(itens = []) {
+  const canvas = document.getElementById('graficoComparativoSensos');
+  if (!canvas || !window.Chart) return;
+  if (graficoComparativoSensos) graficoComparativoSensos.destroy();
+  const cores = valores => valores.map(corDesempenho);
+  graficoComparativoSensos = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: itens.map(item => item.nome || item.senso),
+      datasets: [
+        { label: 'Auditoria anterior', data: itens.map(item => item.anterior == null ? null : Number(item.anterior)),
+          backgroundColor: '#8290a3', borderRadius: 6, barThickness: 14 },
+        { label: 'Auditoria atual', data: itens.map(item => Number(item.atual || 0)),
+          backgroundColor: cores(itens.map(item => item.atual)), borderRadius: 6, barThickness: 14 }
+      ]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { min: 0, max: 100, ticks: { callback: value => `${value}%` }, grid: { color: 'rgba(148,163,184,.14)' } },
+        y: { grid: { color: 'rgba(148,163,184,.12)' } }
+      },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw || 0).toFixed(1)}%` } } }
+    }
+  });
+}
+
+function renderizarComparativoSensos(itens = [], quantidadeSetores = 0) {
+  const corpo = document.getElementById('comparativoSensos');
+  const contador = document.getElementById('setoresComparados');
+  if (!corpo) return;
+  if (contador) contador.textContent = `${Number(quantidadeSetores)} setor(es) comparado(s)`;
+
+  renderizarGraficoComparativo(itens);
+  if (!itens.length) {
+    corpo.innerHTML = '<tr><td colspan="4" class="empty-state">Ainda não há setores com duas auditorias finalizadas para comparar.</td></tr>';
+    return;
+  }
+
+  corpo.innerHTML = itens.map(item => {
+    const variacao = Number(item.variacao || 0);
+    const sinal = variacao > 0.05 ? '+' : '';
+    const classe = variacao > 0.05 ? 'trend-up' : variacao < -0.05 ? 'trend-down' : 'trend-flat';
+    const icone = variacao > 0.05 ? '↑' : variacao < -0.05 ? '↓' : '—';
+    return `<tr>
+      <td><strong>${escaparHtml(item.nome || item.senso)}</strong></td>
+      <td>${item.anterior == null ? '—' : `<strong class="comparison-previous-value">${formatarPercentual(item.anterior)}</strong>`}</td>
+      <td><strong class="${classeDesempenho(item.atual)}">${formatarPercentual(item.atual)}</strong></td>
+      <td><span class="comparison-trend ${classe}">${icone} ${sinal}${variacao.toFixed(1)} p.p.</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function atualizarComparacaoSetor(setorId) {
+  if (!setorId || setorId === 'geral') {
+    const dados = dadosDashboardAtual || {};
+    renderizarComparativoSensos(dados.comparativoSensos || [], dados.setoresComparados || 0);
+    return;
+  }
+  const token = obterToken();
+  const resposta = await fetch(`${API_URL}/setores/${encodeURIComponent(setorId)}/historico`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível carregar a comparação do setor.');
+  const auditorias = dados.auditorias || [];
+  const sensos = dados.sensos || [];
+  const atual = auditorias[auditorias.length - 1];
+  const anterior = auditorias[auditorias.length - 2];
+  const mapaAtual = new Map(sensos.filter(item => Number(item.auditoria_id) === Number(atual?.id)).map(item => [item.nome, Number(item.media || 0)]));
+  const mapaAnterior = new Map(sensos.filter(item => Number(item.auditoria_id) === Number(anterior?.id)).map(item => [item.nome, Number(item.media || 0)]));
+  const itens = [...mapaAtual.entries()].map(([nome, valor]) => ({
+    nome, atual: valor, anterior: mapaAnterior.has(nome) ? mapaAnterior.get(nome) : null,
+    variacao: mapaAnterior.has(nome) ? valor - mapaAnterior.get(nome) : 0
+  }));
+  const contador = document.getElementById('setoresComparados');
+  if (contador) contador.textContent = `${dados.setor?.nome || 'Setor selecionado'} · 1 setor`;
+  renderizarComparativoSensos(itens, 1);
+}
+
+function escaparHtml(valor) {
+  return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  })[caractere]);
+}
+
+function renderizarHistoricoSetores(evolucao = [], setores = []) {
+  const container = document.getElementById('historicoSetores');
+  if (!container) return;
+  if (!setores.length) {
+    container.innerHTML = '<p class="empty-state">Cadastre setores e finalize auditorias para visualizar a evolução.</p>';
+    return;
+  }
+
+  const porSetor = new Map();
+  evolucao.forEach(item => {
+    const nome = item.setor || 'Setor';
+    if (!porSetor.has(nome)) porSetor.set(nome, []);
+    porSetor.get(nome).push(item);
+  });
+
+  container.innerHTML = setores.map(setor => {
+    const historico = (porSetor.get(setor.nome) || []).sort((a,b) => new Date(a.data) - new Date(b.data));
+    const ultimo = Number(setor.score || 0);
+    const anterior = historico.length > 1 ? Number(historico[historico.length - 2].score || 0) : null;
+    const delta = anterior === null ? null : ultimo - anterior;
+    const evolucaoTexto = delta === null ? 'Primeira auditoria registrada' :
+      `${delta > 0 ? '+' : ''}${delta.toFixed(1)} p.p. em relação à anterior`;
+    return `<article class="sector-history-item">
+      <div class="sector-history-heading"><strong>${escaparHtml(setor.nome)}</strong><span class="${classeDesempenho(ultimo)}">${formatarPercentual(ultimo)}</span></div>
+      <div class="progress-track"><div class="progress-value ${classeDesempenho(ultimo)}" style="width:${Math.max(0,Math.min(ultimo,100))}%"></div></div>
+      <small>${evolucaoTexto}</small>
+      <small>${historico.length} auditoria(s) finalizada(s)</small>
+    </article>`;
+  }).join('');
+}
+
 function preencherDiagnostico(dados) {
   const indice = Number(dados.kpis?.indiceAtual || 0);
   const pendentes = Number(dados.kpis?.planosPendentes || 0);
@@ -492,7 +750,7 @@ function atualizarCoresGraficos() {
   const grade = escuro ? 'rgba(148,163,184,.22)' : 'rgba(100,116,139,.18)';
   Chart.defaults.color = texto;
   Chart.defaults.borderColor = grade;
-  [graficoEvolucao, graficoSensos, graficoRadar, graficoPlanos].filter(Boolean).forEach(grafico => {
+  [graficoEvolucao, graficoSensos, graficoRadar, graficoPlanos, graficoComparativoSensos].filter(Boolean).forEach(grafico => {
     if (grafico.options.scales) {
       Object.values(grafico.options.scales).forEach(eixo => {
         if (eixo.ticks) eixo.ticks.color = texto;
@@ -509,10 +767,8 @@ function atualizarCoresGraficos() {
 
     // Mantém a identidade visual do radar ao alternar entre os temas.
     if (grafico === graficoRadar && grafico.data.datasets[0]) {
-      grafico.data.datasets[0].borderColor = escuro ? '#fbbf24' : '#0b2a52';
-      grafico.data.datasets[0].backgroundColor = escuro
-        ? 'rgba(251, 191, 36, 0.16)'
-        : 'rgba(11, 42, 82, 0.10)';
+      grafico.data.datasets[0].borderColor = '#38bdf8';
+      grafico.data.datasets[0].backgroundColor = 'rgba(56, 189, 248, 0.16)';
       grafico.data.datasets[0].pointBorderColor = escuro ? '#182437' : '#ffffff';
     }
 
@@ -521,4 +777,14 @@ function atualizarCoresGraficos() {
 }
 window.addEventListener('sensus:tema-alterado', atualizarCoresGraficos);
 
-document.addEventListener('DOMContentLoaded', carregarDashboard);
+document.getElementById('filtroComparacaoSetor')?.addEventListener('change', async event => {
+  try { await atualizarComparacaoSetor(event.target.value); }
+  catch (erro) { console.error(erro); }
+});
+
+document.getElementById('dashboardSetorSelect')?.addEventListener('change', event => {
+  setorDashboardSelecionado = event.target.value;
+  carregarDashboard(setorDashboardSelecionado === 'geral' ? null : setorDashboardSelecionado);
+});
+
+document.addEventListener('DOMContentLoaded', () => carregarDashboard());

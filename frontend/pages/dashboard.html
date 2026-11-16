@@ -28,6 +28,19 @@
         <a class="btn-primary" href="./configuracao-inicial.html">Continuar configuração</a>
       </section>
 
+      <section class="card dashboard-auditor-toolbar escondido" id="dashboardAuditorToolbar">
+        <div>
+          <small>ÁREA DE RESPONSABILIDADE</small>
+          <h3>Meu dashboard</h3>
+          <p id="dashboardAuditorDescricao">Acompanhe somente os setores atribuídos a você.</p>
+        </div>
+        <label class="dashboard-auditor-selector" for="dashboardSetorSelect">
+          <span>Setor para visualizar</span>
+          <select id="dashboardSetorSelect" class="form-control">
+            <option value="geral">Visão consolidada dos meus setores</option>
+          </select>
+        </label>
+      </section>
       <section class="stats-grid dashboard-kpis">
         <article class="card stat-card">
           <div class="stat-icon">
@@ -36,8 +49,8 @@
 
           <div>
             <small>Índice Atual</small>
-            <h2 id="indiceAtual">0%</h2>
-            <p id="classificacaoAtual">Sem auditorias finalizadas</p>
+            <div class="stat-value-row"><h2 id="indiceAtual">0%</h2><span id="badgeIndiceAtual" class="status-pill status-neutral">Sem dados</span></div>
+            <p>Média dos resultados da auditoria finalizada mais recente de cada setor ativo.</p>
           </div>
         </article>
 
@@ -48,8 +61,32 @@
 
           <div>
             <small>Média Geral Anual</small>
-            <h2 id="mediaGeral">0%</h2>
+            <div class="stat-value-row"><h2 id="mediaGeral">0%</h2><span id="badgeMediaGeral" class="status-pill status-neutral">Sem dados</span></div>
             <p>Média das auditorias finalizadas no ano</p>
+          </div>
+        </article>
+
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <i class="icon-trophy"></i>
+          </div>
+
+          <div>
+            <small>Melhor Resultado</small>
+            <div class="stat-value-row"><h2 id="melhorScore">0%</h2><span id="badgeMelhorScore" class="status-pill status-neutral">Sem dados</span></div>
+            <p class="worst-result-row"><span id="piorScoreTexto">Pior resultado: 0%</span><span id="badgePiorScore" class="status-pill status-neutral">Sem dados</span></p>
+          </div>
+        </article>
+
+        <article class="card stat-card">
+          <div class="stat-icon">
+            <i class="icon-building-2"></i>
+          </div>
+
+          <div>
+            <small>Cobertura das Auditorias</small>
+            <div class="stat-value-row"><h2 id="coberturaSetores">0/0</h2><span id="badgeCobertura" class="status-pill status-neutral">Sem dados</span></div>
+            <p>Setores auditados</p>
           </div>
         </article>
 
@@ -67,18 +104,6 @@
 
         <article class="card stat-card">
           <div class="stat-icon">
-            <i class="icon-building-2"></i>
-          </div>
-
-          <div>
-            <small>Cobertura das Auditorias</small>
-            <h2 id="coberturaSetores">0/0</h2>
-            <p>Setores auditados</p>
-          </div>
-        </article>
-
-        <article class="card stat-card">
-          <div class="stat-icon">
             <i class="icon-list-todo"></i>
           </div>
 
@@ -88,48 +113,48 @@
             <p>Ações que exigem acompanhamento</p>
           </div>
         </article>
-
-        <article class="card stat-card">
-          <div class="stat-icon">
-            <i class="icon-trophy"></i>
-          </div>
-
-          <div>
-            <small>Melhor Resultado</small>
-            <h2 id="melhorScore">0%</h2>
-            <p id="piorScoreTexto">Pior resultado: 0%</p>
-          </div>
-        </article>
       </section>
 
-      <section class="dashboard-grid">
-        <article class="card chart-card chart-large">
-          <div class="card-heading">
-            <div>
-              <h3>Evolução das Auditorias</h3>
-              <p>Histórico do índice geral das auditorias finalizadas.</p>
+      <section class="dashboard-performance-legend" aria-label="Legenda de desempenho">
+        <strong>Legenda de desempenho:</strong>
+        <span class="legend-pill critical"><i></i> Crítico (0% – 49,9%)</span>
+        <span class="legend-pill attention"><i></i> Atenção (50% – 69,9%)</span>
+        <span class="legend-pill low"><i></i> Regular (70% – 84,9%)</span>
+        <span class="legend-pill good"><i></i> Excelente (85% – 100%)</span>
+      </section>
+
+
+
+      <section class="dashboard-grid dashboard-charts-reorganized">
+        <div class="dashboard-chart-stack">
+          <article class="card chart-card chart-evolution-card">
+            <div class="card-heading">
+              <div>
+                <h3>Evolução das Auditorias</h3>
+                <p>Histórico do índice geral das auditorias finalizadas.</p>
+              </div>
             </div>
-          </div>
 
-          <div class="chart-container">
-            <canvas id="graficoEvolucao"></canvas>
-          </div>
-        </article>
-
-        <article class="card chart-card">
-          <div class="card-heading">
-            <div>
-              <h3>Desempenho por Senso</h3>
-              <p>Média percentual dos cinco sensos.</p>
+            <div class="chart-container">
+              <canvas id="graficoEvolucao"></canvas>
             </div>
-          </div>
+          </article>
 
-          <div class="chart-container">
-            <canvas id="graficoSensos"></canvas>
-          </div>
-        </article>
+          <article class="card chart-card chart-senso-performance-card">
+            <div class="card-heading">
+              <div>
+                <h3>Desempenho por Senso</h3>
+                <p>Média percentual dos cinco sensos.</p>
+              </div>
+            </div>
 
-        <article class="card chart-card">
+            <div class="chart-container">
+              <canvas id="graficoSensos"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <article class="card chart-card radar-large-card">
           <div class="card-heading">
             <div>
               <h3>Radar 5S</h3>
@@ -143,7 +168,53 @@
         </article>
       </section>
 
-      <section class="card" style="margin-bottom:24px;">
+      <section class="card dashboard-comparison-card">
+        <div class="card-heading">
+          <div>
+            <h3>Evolução dos cinco sensos</h3>
+            <p>Compare a evolução geral ou acompanhe um setor específico.</p>
+          </div>
+          <span id="setoresComparados" class="comparison-count">Aguardando dados</span>
+        </div>
+        <div class="comparison-toolbar">
+          <div class="comparison-controls">
+            <label for="filtroComparacaoSetor">Setor para comparação</label>
+            <select id="filtroComparacaoSetor" class="form-control">
+              <option value="geral">Todos os setores ativos — visão geral</option>
+            </select>
+          </div>
+          <div class="comparison-chart-legend" aria-label="Legenda da auditoria anterior e das faixas de desempenho">
+          <span><i class="swatch-previous"></i> Auditoria anterior</span>
+          <span><i class="swatch-critical"></i> Crítico (0%–49,9%)</span>
+          <span><i class="swatch-attention"></i> Atenção (50%–69,9%)</span>
+          <span><i class="swatch-low"></i> Regular (70%–84,9%)</span>
+            <span><i class="swatch-good"></i> Excelente (85%–100%)</span>
+          </div>
+        </div>
+        <div class="comparison-chart-container">
+          <canvas id="graficoComparativoSensos"></canvas>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table comparison-table">
+            <thead><tr><th>Senso</th><th>Anterior</th><th>Atual</th><th>Evolução</th></tr></thead>
+            <tbody id="comparativoSensos">
+              <tr><td colspan="4" class="empty-state">Carregando comparação...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card dashboard-sector-history">
+        <div class="card-heading">
+          <div><h3>Histórico de evolução por setor</h3><p>Acompanhe a trajetória do índice 5S de cada setor ativo.</p></div>
+          <a class="btn-secondary" href="./setores.html">Abrir setores</a>
+        </div>
+        <div id="historicoSetores" class="sector-history-grid">
+          <p class="empty-state">Carregando histórico dos setores...</p>
+        </div>
+      </section>
+
+      <section class="card dashboard-pending-audits admin-only-dashboard escondido">
         <div class="card-heading">
           <div>
             <h3>Setores pendentes de auditoria</h3>
@@ -156,7 +227,7 @@
       </section>
 
       <section class="dashboard-grid dashboard-bottom">
-        <article class="card ranking-card">
+        <article class="card ranking-card admin-only-dashboard escondido">
           <div class="card-heading">
             <div>
               <h3>Ranking dos Setores</h3>
@@ -214,9 +285,12 @@
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
+    let usuarioDashboard = {};
+    try { usuarioDashboard = JSON.parse(localStorage.getItem("sensus_usuario") || "{}"); } catch (_) {}
+    const auditorVisualizando = usuarioDashboard.perfil === "auditor";
     renderTopbar(
-      "Dashboard Executivo",
-      "Acompanhe os indicadores, resultados e a evolução da gestão 5S.",
+      auditorVisualizando ? "Meu Dashboard" : "Dashboard Executivo",
+      auditorVisualizando ? "Acompanhe os resultados dos setores sob sua responsabilidade." : "Acompanhe os indicadores, resultados e a evolução da gestão 5S.",
       "Nova Auditoria",
       "./checklist.html"
     );
@@ -225,20 +299,5 @@
   <script src="../js/protegerPagina.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="../js/dashboard.js"></script>
-   <script src="../js/components.js"></script>
-
-  <script>
-    renderSidebar("auditoria");
-
-    renderTopbar(
-      "Auditoria 5S",
-      "Realize a auditoria por critérios e acompanhe cada senso.",
-      "Ver Dashboard",
-      "./dashboard.html"
-    );
-  </script>
-
-  <script src="../js/checklist.js"></script>
-  <script src="../js/components.js"></script>
 </body>
 </html>

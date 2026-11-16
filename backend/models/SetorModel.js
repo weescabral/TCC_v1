@@ -265,8 +265,53 @@ async function contarAtivosPorAuditor(auditorId, empresaId) {
   return Number(row.total || 0);
 }
 
+
+async function historico(id, empresaId) {
+  const setor = await buscarPorId(id, empresaId);
+  if (!setor) return null;
+
+  const [auditorias] = await db.query(
+    `SELECT id, codigo, data_auditoria, percentual_geral, classificacao
+     FROM auditorias
+     WHERE setor_id = ? AND empresa_id = ? AND status = 'finalizada'
+     ORDER BY data_auditoria ASC, id ASC`,
+    [id, empresaId]
+  );
+
+  const [sensos] = await db.query(
+    `SELECT a.id AS auditoria_id, s.codigo AS senso, s.nome,
+       (SUM(r.nota * COALESCE(r.peso_aplicado, c.peso, 1)) /
+        NULLIF(SUM(5 * COALESCE(r.peso_aplicado, c.peso, 1)), 0)) * 100 AS media
+     FROM auditorias a
+     INNER JOIN respostas_auditoria r ON r.auditoria_id = a.id
+     INNER JOIN criterios_5s c ON c.id = r.criterio_id
+     INNER JOIN sensos_5s s ON s.id = c.senso_id
+     WHERE a.setor_id = ? AND a.empresa_id = ? AND a.status = 'finalizada'
+     GROUP BY a.id, s.id, s.codigo, s.nome, s.ordem
+     ORDER BY a.data_auditoria ASC, a.id ASC, s.ordem`,
+    [id, empresaId]
+  );
+
+  const [[planos]] = await db.query(
+    `SELECT COUNT(*) AS total,
+       SUM(pa.status = 'concluido') AS concluidos,
+       SUM(pa.status NOT IN ('concluido','cancelado')) AS pendentes
+     FROM planos_acao pa
+     INNER JOIN auditorias a ON a.id = pa.auditoria_id
+     WHERE a.setor_id = ? AND a.empresa_id = ?`,
+    [id, empresaId]
+  );
+
+  return { setor, auditorias, sensos, planos: {
+    total: Number(planos.total || 0),
+    concluidos: Number(planos.concluidos || 0),
+    pendentes: Number(planos.pendentes || 0)
+  }};
+}
+
 module.exports = {
   listar,
+  historico,
   listarInativos,
   reativar,
   excluirDefinitivamente,

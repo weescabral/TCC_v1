@@ -34,7 +34,7 @@ async function criarEmpresaComAdmin({ empresa, usuario }) {
 
 async function buscarPorEmail(email) {
   const [rows] = await db.query(
-    `SELECT u.id, u.empresa_id, u.nome, u.email, u.senha, u.perfil, u.ativo, e.nome AS empresa_nome
+    `SELECT u.id, u.empresa_id, u.nome, u.email, u.senha, u.perfil, u.foto_url, u.ativo, e.nome AS empresa_nome
      FROM usuarios u
      INNER JOIN empresas e ON e.id = u.empresa_id
      WHERE u.email = ?
@@ -46,7 +46,7 @@ async function buscarPorEmail(email) {
 
 async function buscarUsuarioSeguro(id) {
   const [rows] = await db.query(
-    `SELECT id, empresa_id, nome, email, perfil, ativo, criado_em
+    `SELECT id, empresa_id, nome, email, perfil, foto_url, ativo, criado_em
      FROM usuarios
      WHERE id = ?
      LIMIT 1`,
@@ -89,4 +89,14 @@ async function atualizarPerfil(id, nome) {
   return buscarUsuarioSeguro(id);
 }
 
-module.exports = { criarEmpresaComAdmin, buscarPorEmail, buscarUsuarioSeguro, atualizarPerfil, criarTokenRecuperacao, buscarUsuarioPorToken, concluirRecuperacao };
+async function atualizarFotoPerfil(id, fotoUrl, fotoPublicId) {
+  await db.query('UPDATE usuarios SET foto_url = ?, foto_public_id = ? WHERE id = ?', [fotoUrl, fotoPublicId, id]);
+  return buscarUsuarioSeguro(id);
+}
+
+async function buscarFotoPerfil(id) {
+  const [rows] = await db.query('SELECT foto_public_id FROM usuarios WHERE id = ? LIMIT 1', [id]);
+  return rows[0]?.foto_public_id || null;
+}
+
+module.exports = { criarEmpresaComAdmin, buscarPorEmail, buscarUsuarioSeguro, atualizarPerfil, atualizarFotoPerfil, buscarFotoPerfil, criarTokenRecuperacao, buscarUsuarioPorToken, concluirRecuperacao };

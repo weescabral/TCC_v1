@@ -10,6 +10,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  // Interpreta DATETIME/TIMESTAMP do MySQL como UTC para evitar deslocamento de 3h.
+  timezone: 'Z',
 });
 
 module.exports = pool.promise();

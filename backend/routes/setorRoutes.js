@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(autenticar);
 
 router.get('/', asyncHandler(SetorController.listar));
+router.get('/:id/historico', asyncHandler(SetorController.historico));
 router.get('/inativos', autorizar('administrador'), asyncHandler(SetorController.listarInativos));
 router.get('/auditores', autorizar('administrador'), asyncHandler(SetorController.listarAuditores));
 router.get('/:id', asyncHandler(SetorController.buscar));

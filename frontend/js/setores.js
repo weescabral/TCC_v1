@@ -138,8 +138,7 @@ function renderizarSetores() {
     setores.forEach((setor, indice) => {
       const possuiScoreFinalizado = setor.score_atual !== null && setor.score_atual !== undefined;
       const scoreNumber = possuiScoreFinalizado ? Number(setor.score_atual) : null;
-      // Faixas de desempenho: <50 vermelho, 50–69 laranja,
-      // 70–84 amarelo e 85–100 verde.
+      // Faixas oficiais do Sensus: 0–49 crítico, 50–79 atenção, 80–100 bom.
       const scoreClass = !possuiScoreFinalizado ? "" :
         scoreNumber < 50 ? "performance-critical" :
         scoreNumber < 70 ? "performance-low" :
@@ -209,6 +208,7 @@ function renderizarSetores() {
             ? `Último Score: <strong class="${scoreClass}">${scoreNumber.toFixed(2)}%</strong>`
             : '<span class="sector-no-score">Nunca auditado</span>'}</span>
           <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+            <button class="btn-primary" type="button" data-view-sector-history="${setor.id}">Ver evolução</button>
             ${isAdmin ? `<button class="btn-primary" type="button" onclick='iniciarEdicao(${JSON.stringify(setor)})'>Editar</button>` : ''}
             ${auditorDefinido && (isAdmin || Number(setor.auditor_id) === Number(JSON.parse(localStorage.getItem("sensus_usuario") || "{}").id))
               ? `<a href="./checklist.html?setor=${encodeURIComponent(setor.id)}" class="btn-primary">Auditar</a>`
@@ -352,3 +352,96 @@ botaoCancelar?.addEventListener("click", cancelarEdicao);
 
 carregarAuditores();
 carregarSetores();
+
+
+let graficoHistoricoSetor = null;
+
+async function abrirHistoricoSetor(id) {
+  const painel = document.getElementById('sectorHistoryInline');
+  const corpo = document.getElementById('sectorHistoryInlineBody');
+  const titulo = document.getElementById('sectorHistoryInlineTitle');
+  if (!painel || !corpo) return;
+  painel.hidden = false;
+  titulo.textContent = 'Carregando evolução...';
+  corpo.innerHTML = '<p class="empty-state">Buscando auditorias finalizadas...</p>';
+  painel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    const dados = await requisicao(`/setores/${id}/historico`);
+    const setor = dados.setor || {};
+    const auditorias = dados.auditorias || [];
+    const sensos = dados.sensos || [];
+    const ultimo = auditorias[auditorias.length - 1];
+    const anterior = auditorias[auditorias.length - 2];
+    const atualMap = new Map(sensos.filter(x => Number(x.auditoria_id) === Number(ultimo?.id)).map(x => [x.nome, Number(x.media || 0)]));
+    const anteriorMap = new Map(sensos.filter(x => Number(x.auditoria_id) === Number(anterior?.id)).map(x => [x.nome, Number(x.media || 0)]));
+    const atualScore = Number(ultimo?.percentual_geral || 0);
+    const anteriorScore = anterior ? Number(anterior.percentual_geral || 0) : null;
+    const delta = anteriorScore === null ? null : atualScore - anteriorScore;
+    titulo.textContent = `Evolução — ${setor.nome || 'Setor'}`;
+    corpo.innerHTML = `
+      <div class="sector-history-inline-kpis">
+        <div><small>Auditorias finalizadas</small><strong>${auditorias.length}</strong></div>
+        <div><small>Índice atual</small><strong class="${atualScore < 50 ? 'performance-critical' : atualScore < 70 ? 'performance-low' : atualScore < 85 ? 'performance-medium' : 'performance-good'}">${ultimo ? atualScore.toFixed(1)+'%' : '—'}</strong></div>
+        <div><small>Variação do último ciclo</small><strong class="${delta === null ? '' : delta > 0 ? 'trend-up' : delta < 0 ? 'trend-down' : ''}">${delta === null ? '—' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)} p.p.`}</strong></div>
+        <div><small>Planos concluídos</small><strong>${Number(dados.planos?.concluidos || 0)} / ${Number(dados.planos?.total || 0)}</strong></div>
+      </div>
+      <div class="sector-history-inline-section">
+        <h3>Histórico do índice 5S</h3>
+        <p class="muted">Resultados das auditorias finalizadas, em ordem cronológica.</p>
+        <div class="sector-history-inline-chart"><canvas id="sectorHistoryChart"></canvas></div>
+      </div>
+      <div class="sector-history-inline-section">
+        <h3>Comparação por senso</h3>
+        <p class="muted">Última auditoria versus auditoria anterior.</p>
+        <div class="table-responsive sector-history-comparison-wrap"><table class="data-table sector-history-comparison-table">
+          <thead><tr><th>Senso</th><th>Anterior</th><th>Atual</th><th>Variação</th></tr></thead>
+          <tbody>${[...atualMap.entries()].map(([nome, valor]) => {
+            const ant = anteriorMap.has(nome) ? anteriorMap.get(nome) : null;
+            const variacao = ant === null ? null : valor - ant;
+            const classe = variacao === null ? '' : variacao > 0.05 ? 'trend-up' : variacao < -0.05 ? 'trend-down' : 'trend-flat';
+            return `<tr><td><strong>${escapeHtml(nome)}</strong></td><td>${ant === null ? '—' : `<span class="comparison-previous-value">${ant.toFixed(1)}%</span>`}</td><td><strong class="${valor < 50 ? 'performance-critical' : valor < 70 ? 'performance-low' : valor < 85 ? 'performance-medium' : 'performance-good'}">${valor.toFixed(1)}%</strong></td><td><span class="${classe}">${variacao === null ? '—' : `${variacao > 0 ? '+' : ''}${variacao.toFixed(1)} p.p.`}</span></td></tr>`;
+          }).join('') || '<tr><td colspan="4">Ainda não há respostas por senso.</td></tr>'}</tbody>
+        </table></div>
+      </div>
+      <div class="sector-history-inline-section">
+        <h3>Auditorias finalizadas</h3>
+        <div class="sector-history-audits">${auditorias.slice().reverse().map(a => {
+          const score = Number(a.percentual_geral || 0);
+          const classe = score < 50 ? 'performance-critical' : score < 70 ? 'performance-low' : score < 85 ? 'performance-medium' : 'performance-good';
+          return `<div><strong>${escapeHtml(a.codigo || 'Auditoria')}</strong><span>${new Date(a.data_auditoria).toLocaleDateString('pt-BR')}</span><b class="${classe}">${score.toFixed(1)}%</b></div>`;
+        }).join('') || '<p>Nenhuma auditoria finalizada.</p>'}</div>
+      </div>`;
+    if (window.Chart) {
+      if (graficoHistoricoSetor) graficoHistoricoSetor.destroy();
+      const canvas = document.getElementById('sectorHistoryChart');
+      const dark = document.documentElement.dataset.theme === 'escuro';
+      graficoHistoricoSetor = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: auditorias.map(a => new Date(a.data_auditoria).toLocaleDateString('pt-BR')),
+          datasets: [{ label: 'Índice 5S', data: auditorias.map(a => Number(a.percentual_geral || 0)),
+            borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,.14)', fill: true,
+            tension: .3, pointRadius: 5, pointBackgroundColor: auditorias.map(a => {
+              const v = Number(a.percentual_geral || 0); return v < 50 ? '#dc2626' : v < 70 ? '#eab308' : v < 85 ? '#f97316' : '#16a34a';
+            }) }]
+        },
+        options: { responsive: true, maintainAspectRatio: false,
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v}%` }, grid: { color: dark ? 'rgba(148,163,184,.2)' : 'rgba(100,116,139,.15)' } },
+            x: { grid: { color: dark ? 'rgba(148,163,184,.12)' : 'rgba(100,116,139,.1)' } } },
+          plugins: { legend: { display: false } } }
+      });
+    }
+  } catch (erro) {
+    corpo.innerHTML = `<p class="mensagem-checklist erro">${escapeHtml(erro.message || 'Não foi possível carregar o histórico do setor.')}</p>`;
+  }
+}
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-view-sector-history]');
+  if (button) abrirHistoricoSetor(button.dataset.viewSectorHistory);
+});
+document.getElementById('closeSectorHistoryInline')?.addEventListener('click', () => {
+  const painel = document.getElementById('sectorHistoryInline');
+  if (painel) painel.hidden = true;
+  if (graficoHistoricoSetor) { graficoHistoricoSetor.destroy(); graficoHistoricoSetor = null; }
+});

@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const { classificarPercentual } = require('../utils/classificacao');
+const NotificacaoModel = require('./NotificacaoModel');
 
 async function listar(empresaId, usuario = null) {
     const filtroAuditor = usuario?.perfil === 'auditor' ? 'AND s.auditor_id = ?' : '';
@@ -152,10 +153,16 @@ async function buscarPorId(id, empresaId) {
         SELECT
             pa.*,
             c.titulo AS criterio_titulo,
+            c.senso_id AS criterio_senso_id,
+            s.codigo AS senso,
+            s.nome AS nome_senso,
+            s.ordem AS ordem_senso,
             u.nome AS responsavel_nome
         FROM planos_acao pa
         LEFT JOIN criterios_5s c
             ON c.id = pa.criterio_id
+        LEFT JOIN sensos_5s s
+            ON s.id = c.senso_id
         LEFT JOIN usuarios u
             ON u.id = pa.responsavel_id
         WHERE pa.auditoria_id = ?
@@ -698,8 +705,8 @@ async function finalizar(id, empresaId) {
         UPDATE auditorias
         SET
             status = 'finalizada',
-            finalizada_em = NOW(),
-            duracao_segundos = TIMESTAMPDIFF(SECOND, COALESCE(iniciada_em, data_auditoria), NOW())
+            finalizada_em = UTC_TIMESTAMP(),
+            duracao_segundos = TIMESTAMPDIFF(SECOND, COALESCE(iniciada_em, data_auditoria), UTC_TIMESTAMP())
         WHERE id = ?
           AND empresa_id = ?
         `,
@@ -718,7 +725,7 @@ async function finalizar(id, empresaId) {
     );
 
     const [[dadosTempo]] = await db.query(
-        `SELECT duracao_segundos, finalizada_em FROM auditorias WHERE id = ? LIMIT 1`,
+        `SELECT duracao_segundos, DATE_FORMAT(finalizada_em, '%Y-%m-%dT%H:%i:%s.000Z') AS finalizada_em_utc FROM auditorias WHERE id = ? LIMIT 1`,
         [id]
     );
 
@@ -766,10 +773,25 @@ async function finalizar(id, empresaId) {
         );
     }
 
+    // A falha no serviço de notificações não deve impedir a conclusão da auditoria.
+    try {
+        await NotificacaoModel.registrarAuditoriaFinalizada({
+            auditoriaId: Number(id),
+            empresaId: Number(empresaId),
+            codigo: auditoria.codigo,
+            setorId: Number(auditoria.setor_id),
+            percentual: totais.percentual,
+            usuarioId: Number(auditoria.usuario_id),
+            totalPlanos: respostasCriticas.length,
+        });
+    } catch (erroNotificacao) {
+        console.error('Não foi possível registrar as notificações da auditoria:', erroNotificacao.message);
+    }
+
     return {
         ...totais,
         duracao_segundos: Number(dadosTempo?.duracao_segundos || 0),
-        finalizada_em: dadosTempo?.finalizada_em || new Date(),
+        finalizada_em: dadosTempo?.finalizada_em_utc || new Date().toISOString(),
         status: 'finalizada'
     };
 }

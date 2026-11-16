@@ -321,6 +321,15 @@ A versão atual utiliza um checklist composto por:
 
 O sistema utiliza migrations para organizar a evolução da estrutura do banco de dados e manter a consistência das informações.
 
+### Fotos de perfil da equipe
+
+Para habilitar fotos de perfil compartilhadas entre os usuários, execute uma única vez o arquivo `backend/database/migrations/002_fotos_perfil_usuarios.sql` no banco de dados configurado. O backend utiliza as credenciais do Cloudinary já definidas no `.env` para armazenar as imagens em `sensus5s/perfis`. Depois da migration, cada usuário deve abrir **Editar perfil** e selecionar novamente sua foto, pois as imagens da versão anterior ficavam salvas apenas no navegador de cada pessoa. As novas fotos passam a aparecer na Gestão de usuários e no menu lateral em qualquer dispositivo.
+
+### Central de notificações inteligentes
+
+Para habilitar a central de notificações, execute uma única vez `backend/database/migrations/006_central_notificacoes.sql`. A central apresenta alertas de planos de ação vencidos ou próximos do prazo, auditorias periódicas vencidas ou próximas do vencimento, auditorias finalizadas e novos planos atribuídos. Administradores recebem avisos da empresa; auditores visualizam somente avisos relacionados aos setores sob sua responsabilidade ou aos planos atribuídos diretamente a eles. Cada usuário possui seu próprio estado de leitura. Esta versão utiliza notificações internas no sininho do sistema, sem envio de e-mail ou notificações push.
+
+
 ---
 
 ## 🔐 Segurança

@@ -64,6 +64,17 @@ async function reativar(req, res) {
   return res.json({ mensagem: 'Setor reativado com sucesso. O histórico foi preservado.', setor: setorReativado });
 }
 
+
+async function historico(req, res) {
+  const setor = await SetorModel.buscarPorId(req.params.id, req.usuario.empresa_id);
+  if (!setor) return res.status(404).json({ erro: 'Setor não encontrado.' });
+  if (req.usuario.perfil === 'auditor' && Number(setor.auditor_id) !== Number(req.usuario.id)) {
+    return res.status(403).json({ erro: 'Você não possui acesso a este setor.' });
+  }
+  const dados = await SetorModel.historico(req.params.id, req.usuario.empresa_id);
+  return res.json(dados);
+}
+
 async function buscar(req, res) {
   const setor = await SetorModel.buscarPorId(req.params.id, req.usuario.empresa_id);
 
@@ -191,6 +202,8 @@ async function remover(req, res) {
 }
 
 module.exports = {
+  historico,
+
   listar,
   listarInativos,
   reativar,

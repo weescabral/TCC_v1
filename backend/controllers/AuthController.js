@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const AuthModel = require('../models/AuthModel');
 const crypto = require('crypto');
+const cloudinary = require('../config/cloudinary');
 
 function gerarToken(usuario) {
   return jwt.sign(
@@ -173,9 +174,28 @@ async function atualizarPerfil(req, res) {
   return res.json({ mensagem: 'Perfil atualizado com sucesso.', usuario });
 }
 
+async function atualizarFotoPerfil(req, res) {
+  if (!req.file) return res.status(400).json({ erro: 'Selecione uma imagem para enviar.' });
+  const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!tiposPermitidos.includes(req.file.mimetype)) return res.status(400).json({ erro: 'Formato inválido. Envie JPG, PNG ou WEBP.' });
+  if (req.file.size > 2 * 1024 * 1024) return res.status(400).json({ erro: 'A imagem deve ter no máximo 2 MB.' });
+
+  const fotoAnterior = await AuthModel.buscarFotoPerfil(req.usuario.id);
+  const enviada = await cloudinary.enviarBuffer(req.file.buffer, {
+    folder: 'sensus5s/perfis', resource_type: 'image',
+    transformation: [{ width: 600, height: 600, crop: 'limit', quality: 'auto', fetch_format: 'auto' }]
+  });
+  const usuario = await AuthModel.atualizarFotoPerfil(req.usuario.id, enviada.secure_url, enviada.public_id);
+  if (fotoAnterior) {
+    try { await cloudinary.excluirArquivo(fotoAnterior, 'image/jpeg'); }
+    catch (erro) { console.warn('Não foi possível remover a foto de perfil anterior:', erro.message); }
+  }
+  return res.json({ mensagem: 'Foto de perfil atualizada com sucesso.', usuario });
+}
+
 async function me(req, res) {
   const usuario = await AuthModel.buscarUsuarioSeguro(req.usuario.id);
   return res.json({ usuario });
 }
 
-module.exports = { registrar, login, me, atualizarPerfil, solicitarRecuperacao, redefinirSenha };
+module.exports = { registrar, login, me, atualizarPerfil, atualizarFotoPerfil, solicitarRecuperacao, redefinirSenha };
