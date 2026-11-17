@@ -4,3 +4,107 @@
 .onboarding-actions .btn-text:hover{background:#eef3f9;border-color:#aebdd0;color:#071b3d;box-shadow:0 2px 7px #071b3d12}
 .onboarding-actions .btn-text:focus-visible{outline:3px solid #ffb300;outline-offset:2px}
 .onboarding-actions .btn-text:disabled{opacity:.55;cursor:wait}
+
+
+/* Tema escuro: onboarding de primeiro acesso */
+html[data-theme="escuro"] body.onboarding-page {
+  background: linear-gradient(135deg, #0b1220 0%, #111d30 100%);
+  color: #e5edf7;
+  color-scheme: dark;
+}
+
+html[data-theme="escuro"] .onboarding-brand,
+html[data-theme="escuro"] .onboarding-brand strong {
+  color: #f1f5f9;
+}
+
+html[data-theme="escuro"] .onboarding-brand small,
+html[data-theme="escuro"] .onboarding-brand > span {
+  color: #fbbf24;
+}
+
+html[data-theme="escuro"] .onboarding-brand a {
+  color: #cbd5e1;
+}
+
+html[data-theme="escuro"] .onboarding-card {
+  background: #182437;
+  border: 1px solid #334155;
+  color: #e5edf7;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .42);
+}
+
+html[data-theme="escuro"] .onboarding-kicker {
+  color: #fbbf24;
+}
+
+html[data-theme="escuro"] .onboarding-card h1,
+html[data-theme="escuro"] .onboarding-card .step-copy h2 {
+  color: #f1f5f9;
+}
+
+html[data-theme="escuro"] .onboarding-intro,
+html[data-theme="escuro"] .step-copy p {
+  color: #cbd5e1;
+}
+
+html[data-theme="escuro"] .progress-track {
+  background: #334155;
+}
+
+html[data-theme="escuro"] .step-meta {
+  color: #94a3b8;
+}
+
+html[data-theme="escuro"] .step-icon {
+  background: #493a1b;
+  color: #fcd34d;
+}
+
+html[data-theme="escuro"] .step-tip {
+  background: #263449;
+  border-left-color: #fbbf24;
+  color: #cbd5e1;
+}
+
+html[data-theme="escuro"] .onboarding-actions {
+  border-top-color: #334155;
+}
+
+html[data-theme="escuro"] .onboarding-actions .btn-outline {
+  background: #263449;
+  border-color: #475569;
+  color: #e5edf7;
+}
+
+html[data-theme="escuro"] .onboarding-actions .btn-outline:hover {
+  background: #334155;
+  border-color: #fbbf24;
+  color: #fff;
+}
+
+html[data-theme="escuro"] .onboarding-actions .btn-text {
+  background: #263449;
+  border-color: #475569;
+  color: #e5edf7;
+}
+
+html[data-theme="escuro"] .onboarding-actions .btn-text:hover {
+  background: #334155;
+  border-color: #fbbf24;
+  color: #fff;
+}
+
+html[data-theme="escuro"] .onboarding-actions .btn-primary {
+  background: #ffb300;
+  border-color: #ffb300;
+  color: #10213b;
+}
+
+html[data-theme="escuro"] .onboarding-feedback {
+  color: #a6b4c7;
+}
+
+html[data-theme="escuro"] .onboarding-footnote {
+  color: #cbd5e1;
+}

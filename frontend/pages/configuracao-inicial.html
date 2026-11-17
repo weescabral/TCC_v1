@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sensus 5S | Configuração inicial</title>
+  <script>
+    // Aplica o tema salvo antes da renderização para evitar o cartão branco no primeiro acesso.
+    try {
+      document.documentElement.dataset.theme = localStorage.getItem('sensus_tema') || 'claro';
+    } catch (erro) {
+      document.documentElement.dataset.theme = 'claro';
+    }
+  </script>
   <link rel="stylesheet" href="../css/styles.css">
   <link rel="stylesheet" href="../css/onboarding.css">
   <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet">
