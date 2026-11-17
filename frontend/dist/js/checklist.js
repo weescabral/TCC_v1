@@ -1200,6 +1200,12 @@ if (elementos.checklistForm) {
 
 (async function inicializarChecklist() {
   await carregarSetores();
+
+  // A data da auditoria é preenchida automaticamente na abertura da tela.
+  // A restauração de uma auditoria em andamento vem depois e substitui
+  // esse padrão pela data originalmente salva, quando existir.
+  configurarDatasPadrao();
+
   configurarAvisoSaidaDuranteAuditoria();
   await restaurarAuditoriaEmAndamento();
 })();
