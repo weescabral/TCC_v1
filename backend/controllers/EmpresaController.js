@@ -1,5 +1,17 @@
 const EmpresaModel = require('../models/EmpresaModel');
 
+async function minha(req, res) {
+  const empresa = await EmpresaModel.buscarPorId(req.usuario.empresa_id);
+  if (!empresa) return res.status(404).json({ erro: 'Empresa não encontrada.' });
+  return res.json(empresa);
+}
+
+async function atualizarMinha(req, res) {
+  if (!String(req.body.nome || '').trim()) return res.status(400).json({ erro: 'O nome da empresa é obrigatório.' });
+  const empresa = await EmpresaModel.atualizar(req.usuario.empresa_id, req.body);
+  return res.json(empresa);
+}
+
 async function listar(req, res) {
   const empresas = await EmpresaModel.listar();
   return res.json(empresas);
@@ -32,4 +44,4 @@ async function remover(req, res) {
   return res.status(204).send();
 }
 
-module.exports = { listar, buscar, criar, atualizar, remover };
+module.exports = { minha, atualizarMinha, listar, buscar, criar, atualizar, remover };

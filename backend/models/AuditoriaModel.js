@@ -12,7 +12,8 @@ async function listar(empresaId, usuario = null) {
             s.nome AS setor_nome,
             s.descricao AS setor_descricao,
             s.auditor_id AS setor_auditor_id,
-            u.nome AS auditor_nome
+            u.nome AS auditor_nome,
+            (SELECT COUNT(*) FROM resultados_sensos rs WHERE rs.auditoria_id = a.id AND rs.status = 'concluido') AS sensos_concluidos
         FROM auditorias a
         INNER JOIN setores s
             ON s.id = a.setor_id
@@ -36,6 +37,7 @@ async function buscarPorId(id, empresaId) {
             s.nome AS setor_nome,
             s.descricao AS setor_descricao,
             s.auditor_id AS setor_auditor_id,
+            s.periodicidade_auditoria AS setor_periodicidade_auditoria,
             u.nome AS auditor_nome
         FROM auditorias a
         INNER JOIN setores s
@@ -210,7 +212,7 @@ async function criar({
         await connection.beginTransaction();
 
         const [setores] = await connection.query(
-            `SELECT id, nome, descricao, auditor_id, periodicidade_auditoria, ativo
+            `SELECT id, nome, descricao, auditor_id, periodicidade_auditoria, DATE_FORMAT(proxima_auditoria_em, '%Y-%m-%d') AS proxima_auditoria_em, ativo
              FROM setores
              WHERE id = ? AND empresa_id = ?
              LIMIT 1`,
@@ -278,13 +280,14 @@ async function criar({
             throw error;
         }
 
-        if (!prazo) {
-            const error = new Error('Informe o prazo da auditoria.');
-            error.status = 400;
+        const prazoProgramado = tipo === 'periodica' ? (setor.proxima_auditoria_em || prazo) : prazo;
+        if (!prazoProgramado && tipo === 'periodica') {
+            const error = new Error('Não foi possível calcular o prazo. Confira a periodicidade cadastrada no setor.');
+            error.status = 409;
             throw error;
         }
 
-        if (notificar_em && new Date(notificar_em) > new Date(prazo)) {
+        if (notificar_em && prazoProgramado && new Date(notificar_em) > new Date(prazoProgramado)) {
             const error = new Error('A data de notificação não pode ser posterior ao prazo da auditoria.');
             error.status = 400;
             throw error;
@@ -345,17 +348,16 @@ async function criar({
                 notificar_em,
                 iniciada_em
             )
-            VALUES (?, ?, ?, ?, ?, ?, 'rascunho', ?, ?, ?, ?, NOW())`,
+            VALUES (?, ?, ?, ?, UTC_TIMESTAMP(), ?, 'rascunho', ?, ?, ?, ?, UTC_TIMESTAMP())`,
             [
                 codigo,
                 empresa_id,
                 setor_id,
                 setor.auditor_id,
-                data_auditoria || new Date(),
                 observacao_geral || null,
                 tipo,
                 tipo === 'extraordinaria' ? motivo_extraordinaria.trim() : null,
-                prazo,
+                prazoProgramado || null,
                 notificar_em || null
             ]
         );
@@ -713,6 +715,25 @@ async function finalizar(id, empresaId) {
         [id, empresaId]
     );
 
+    // A próxima auditoria periódica é calculada a partir da conclusão real deste ciclo.
+    // Auditorias extraordinárias não alteram o calendário regular do setor.
+    if (auditoria.tipo !== 'extraordinaria') {
+        await db.query(
+            `UPDATE setores s
+             SET s.proxima_auditoria_em = DATE(CASE s.periodicidade_auditoria
+               WHEN 'semanal' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 1 WEEK)
+               WHEN 'quinzenal' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 15 DAY)
+               WHEN 'bimestral' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 2 MONTH)
+               WHEN 'trimestral' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 3 MONTH)
+               WHEN 'semestral' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 6 MONTH)
+               WHEN 'anual' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 1 YEAR)
+               ELSE DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 1 MONTH)
+             END)
+             WHERE s.id = ? AND s.empresa_id = ?`,
+            [auditoria.setor_id, empresaId]
+        );
+    }
+
     // Publica o último score do setor somente depois da conclusão dos cinco sensos.
     await db.query(
         `
@@ -725,7 +746,14 @@ async function finalizar(id, empresaId) {
     );
 
     const [[dadosTempo]] = await db.query(
-        `SELECT duracao_segundos, DATE_FORMAT(finalizada_em, '%Y-%m-%dT%H:%i:%s.000Z') AS finalizada_em_utc FROM auditorias WHERE id = ? LIMIT 1`,
+        `SELECT
+            a.duracao_segundos,
+            DATE_FORMAT(a.finalizada_em, '%Y-%m-%dT%H:%i:%s.000Z') AS finalizada_em_utc,
+            DATE_FORMAT(s.proxima_auditoria_em, '%Y-%m-%d') AS proxima_auditoria_em
+         FROM auditorias a
+         INNER JOIN setores s ON s.id = a.setor_id
+         WHERE a.id = ?
+         LIMIT 1`,
         [id]
     );
 
@@ -734,7 +762,8 @@ async function finalizar(id, empresaId) {
         SELECT
             r.criterio_id,
             r.observacao,
-            c.titulo
+            c.titulo,
+            c.peso AS peso_criterio
         FROM respostas_auditoria r
         INNER JOIN criterios_5s c
             ON c.id = r.criterio_id
@@ -744,10 +773,39 @@ async function finalizar(id, empresaId) {
         [id]
     );
 
+    // O prazo inicial dos planos de ação acompanha a periodicidade do setor,
+    // contando a partir da data real de conclusão da auditoria.
+    const [[prazoAutomatico]] = await db.query(
+        `SELECT DATE(CASE periodicidade_auditoria
+            WHEN 'semanal' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 7 DAY)
+            WHEN 'quinzenal' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 15 DAY)
+            WHEN 'mensal' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 1 MONTH)
+            WHEN 'bimestral' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 2 MONTH)
+            WHEN 'trimestral' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 3 MONTH)
+            WHEN 'semestral' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 6 MONTH)
+            WHEN 'anual' THEN DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 1 YEAR)
+            ELSE DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 1 MONTH)
+        END) AS prazo_conclusao
+        FROM setores
+        WHERE id = ? AND empresa_id = ?
+        LIMIT 1`,
+        [auditoria.setor_id, empresaId]
+    );
+    const prazoInicialPlano = prazoAutomatico?.prazo_conclusao || null;
+
     for (const resposta of respostasCriticas) {
         const descricao =
             resposta.observacao
             || `Corrigir a não conformidade identificada no critério: ${resposta.titulo}.`;
+
+        // A prioridade inicial acompanha o peso do critério avaliado:
+        // peso 1 = baixa, peso 2 = média, peso 3 = alta.
+        const pesoCriterio = Number(resposta.peso_criterio);
+        const prioridadeInicial = pesoCriterio === 1
+            ? 'baixa'
+            : pesoCriterio === 3
+                ? 'alta'
+                : 'media';
 
         await db.query(
             `
@@ -759,16 +817,19 @@ async function finalizar(id, empresaId) {
                 responsavel_id,
                 descricao,
                 prioridade,
-                status
+                status,
+                prazo_conclusao
             )
-            VALUES (?, ?, ?, ?, ?, 'alta', 'pendente')
+            VALUES (?, ?, ?, ?, ?, ?, 'pendente', ?)
             `,
             [
                 id,
                 auditoria.setor_id,
                 resposta.criterio_id,
                 auditoria.usuario_id,
-                descricao
+                descricao,
+                prioridadeInicial,
+                prazoInicialPlano
             ]
         );
     }
@@ -792,8 +853,51 @@ async function finalizar(id, empresaId) {
         ...totais,
         duracao_segundos: Number(dadosTempo?.duracao_segundos || 0),
         finalizada_em: dadosTempo?.finalizada_em_utc || new Date().toISOString(),
+        proxima_auditoria_em: dadosTempo?.proxima_auditoria_em || null,
         status: 'finalizada'
     };
+}
+
+
+async function excluirRascunho(id, empresaId) {
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+        const [auditorias] = await connection.query(
+            `SELECT id, status FROM auditorias WHERE id = ? AND empresa_id = ? FOR UPDATE`,
+            [id, empresaId]
+        );
+        const auditoria = auditorias[0];
+        if (!auditoria) {
+            await connection.rollback();
+            return { excluida: false, motivo: 'Auditoria não encontrada.' };
+        }
+        if (auditoria.status === 'finalizada') {
+            await connection.rollback();
+            return { excluida: false, motivo: 'Auditorias finalizadas não podem ser excluídas por esta opção.' };
+        }
+        const [[contagem]] = await connection.query(
+            `SELECT COUNT(*) AS total FROM resultados_sensos WHERE auditoria_id = ? AND status = 'concluido'`,
+            [id]
+        );
+        if (Number(contagem.total || 0) > 0) {
+            await connection.rollback();
+            return { excluida: false, motivo: 'Este rascunho já possui um senso concluído e não pode ser excluído.' };
+        }
+        // Remove dependências do rascunho explicitamente para não depender de ON DELETE CASCADE.
+        await connection.query(`DELETE FROM evidencias_auditoria WHERE auditoria_id = ?`, [id]);
+        await connection.query(`DELETE FROM planos_acao WHERE auditoria_id = ?`, [id]);
+        await connection.query(`DELETE FROM respostas_auditoria WHERE auditoria_id = ?`, [id]);
+        await connection.query(`DELETE FROM resultados_sensos WHERE auditoria_id = ?`, [id]);
+        await connection.query(`DELETE FROM auditorias WHERE id = ? AND empresa_id = ?`, [id, empresaId]);
+        await connection.commit();
+        return { excluida: true };
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
 }
 
 module.exports = {
@@ -803,5 +907,6 @@ module.exports = {
     salvarResposta,
     recalcularResultadoSenso,
     recalcularAuditoria,
-    finalizar
+    finalizar,
+    excluirRascunho
 };

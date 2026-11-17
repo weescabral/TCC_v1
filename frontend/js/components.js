@@ -82,13 +82,27 @@ function renderSidebar(activePage = "") {
           <button class="sensus-modal-close" type="button" onclick="fecharPerfil()" aria-label="Fechar">×</button>
           <div class="profile-modal-heading">
             <div class="profile-modal-avatar" id="profile-preview">${avatar}</div>
-            <div><h2 id="profile-title">Meu perfil</h2><p>Atualize seus dados de acesso.</p></div>
+            <div><h2 id="profile-title">Meu perfil</h2><p>Atualize seus dados pessoais e institucionais.</p></div>
           </div>
           <form id="profile-form">
             <label for="profile-name">Nome</label>
             <input id="profile-name" type="text" maxlength="100" required>
             <label for="profile-email">E-mail</label>
             <input id="profile-email" type="email" disabled>
+            <div id="profile-company-section" class="profile-company-section" hidden>
+              <h3>Dados da empresa</h3>
+              <p class="profile-help">Essas informações serão exibidas no cabeçalho dos relatórios.</p>
+              <label for="profile-company-name">Nome da empresa *</label>
+              <input id="profile-company-name" type="text" maxlength="150" placeholder="Razão social ou nome fantasia">
+              <label for="profile-company-cnpj">CNPJ <small>(opcional)</small></label>
+              <input id="profile-company-cnpj" type="text" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00">
+              <label for="profile-company-address">Endereço <small>(opcional)</small></label>
+              <input id="profile-company-address" type="text" maxlength="255" placeholder="Rua, número, bairro, cidade/UF">
+              <label for="profile-company-phone">Telefone <small>(opcional)</small></label>
+              <input id="profile-company-phone" type="tel" maxlength="30" placeholder="(00) 00000-0000">
+              <label for="profile-company-email">E-mail institucional <small>(opcional)</small></label>
+              <input id="profile-company-email" type="email" maxlength="150" placeholder="contato@empresa.com.br">
+            </div>
             <label for="profile-photo">Foto do perfil</label>
             <input id="profile-photo" type="file" accept="image/png,image/jpeg,image/webp">
             <small class="profile-help">PNG, JPG ou WEBP. A foto fica salva na conta e aparece para toda a equipe.</small>
@@ -113,6 +127,12 @@ function configurarPerfil() {
   nome.value = usuario.nome || '';
   email.value = usuario.email || '';
 
+  const secaoEmpresa = document.getElementById('profile-company-section');
+  if (secaoEmpresa && usuario.perfil === 'administrador') {
+    secaoEmpresa.hidden = false;
+    carregarDadosEmpresaPerfil();
+  }
+
   document.getElementById('profile-photo').addEventListener('change', (event) => {
     const arquivo = event.target.files?.[0];
     if (!arquivo) return;
@@ -136,6 +156,10 @@ function configurarPerfil() {
       feedback.textContent = 'Informe seu nome.';
       return;
     }
+    if (getUsuarioLogado().perfil === 'administrador' && !document.getElementById('profile-company-name').value.trim()) {
+      feedback.textContent = 'Informe o nome da empresa.';
+      return;
+    }
     try {
       const resposta = await fetch(`${obterApiUrl()}/auth/perfil`, {
         method: 'PATCH',
@@ -148,6 +172,23 @@ function configurarPerfil() {
       const dados = await resposta.json();
       if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível atualizar o perfil.');
       let atualizado = { ...getUsuarioLogado(), ...dados.usuario, nome: novoNome };
+      if (atualizado.perfil === 'administrador') {
+        const nomeEmpresa = document.getElementById('profile-company-name').value.trim();
+        if (!nomeEmpresa) throw new Error('Informe o nome da empresa.');
+        const respostaEmpresa = await fetch(`${obterApiUrl()}/empresas/minha`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('sensus_token')}` },
+          body: JSON.stringify({
+            nome: nomeEmpresa,
+            cnpj: document.getElementById('profile-company-cnpj').value.trim() || null,
+            endereco: document.getElementById('profile-company-address').value.trim() || null,
+            telefone: document.getElementById('profile-company-phone').value.trim() || null,
+            email: document.getElementById('profile-company-email').value.trim() || null
+          })
+        });
+        const empresaAtualizada = await respostaEmpresa.json();
+        if (!respostaEmpresa.ok) throw new Error(empresaAtualizada.erro || 'Não foi possível salvar os dados da empresa.');
+      }
       const arquivoFoto = document.getElementById('profile-photo').files?.[0];
       if (arquivoFoto) {
         const formularioFoto = new FormData();
@@ -169,6 +210,24 @@ function configurarPerfil() {
       feedback.textContent = erro.message;
     }
   });
+}
+
+async function carregarDadosEmpresaPerfil() {
+  try {
+    const resposta = await fetch(`${obterApiUrl()}/empresas/minha`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('sensus_token')}` }
+    });
+    const empresa = await resposta.json();
+    if (!resposta.ok) throw new Error(empresa.erro || 'Não foi possível carregar os dados da empresa.');
+    document.getElementById('profile-company-name').value = empresa.nome || '';
+    document.getElementById('profile-company-cnpj').value = empresa.cnpj || '';
+    document.getElementById('profile-company-address').value = empresa.endereco || '';
+    document.getElementById('profile-company-phone').value = empresa.telefone || '';
+    document.getElementById('profile-company-email').value = empresa.email || '';
+  } catch (erro) {
+    const feedback = document.getElementById('profile-feedback');
+    if (feedback) feedback.textContent = erro.message;
+  }
 }
 
 function obterApiUrl() {

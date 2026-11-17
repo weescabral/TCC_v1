@@ -55,6 +55,16 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
+function formatarProximaAuditoria(valor) {
+  if (!valor) return "Não programada";
+  // A API retorna YYYY-MM-DD; construir a data local evita deslocamento de fuso.
+  const partes = String(valor).slice(0, 10).split("-");
+  if (partes.length !== 3) return "Data indisponível";
+  const [ano, mes, dia] = partes.map(Number);
+  if (!ano || !mes || !dia) return "Data indisponível";
+  return new Date(ano, mes - 1, dia).toLocaleDateString("pt-BR");
+}
+
 async function carregarAuditores() {
   if (JSON.parse(localStorage.getItem("sensus_usuario") || "{}").perfil !== "administrador") return;
   try {
@@ -160,10 +170,10 @@ function renderizarSetores() {
               <p>${escapeHtml(setor.descricao || "Sem descrição.")}</p></div>
               <span class="badge">${escapeHtml(setor.codigo || codigoExibicao)}</span>
             </div>
-            <p style="margin-top:12px;color:#64748b;">
-              <strong>Auditor:</strong> ${escapeHtml(setor.auditor_nome || "Não definido")}
+            <p style="margin-top:12px;color:var(--text-secondary, #94a3b8);">
+              <strong style="color:var(--text-primary, #e2e8f0);">Auditor:</strong> <span>${escapeHtml(setor.auditor_nome || "Não definido")}</span>
               ${setor.auditor_ativo === 0 || setor.auditor_ativo === false ? '<br><strong style="color:#d97706;">Auditor atualmente inativo</strong>' : ''}
-              <br><strong>Periodicidade:</strong> ${escapeHtml(periodicidade)}
+              <br><strong style="color:var(--text-primary, #e2e8f0);">Periodicidade:</strong> <span>${escapeHtml(periodicidade)}</span>
               <br><strong>Desativado em:</strong> ${setor.inativado_em ? new Date(setor.inativado_em).toLocaleDateString("pt-BR") : "Data não informada"}
             </p>
             ${setor.motivo_inativacao ? `<p class="sector-inactive-reason"><strong>Motivo:</strong> ${escapeHtml(setor.motivo_inativacao)}</p>` : ""}
@@ -191,9 +201,14 @@ function renderizarSetores() {
             <span class="badge">${escapeHtml(codigoExibicao)}</span>
           </div>
 
-          <p style="margin-top:12px;color:#64748b;">
-            <strong>Auditor:</strong> ${escapeHtml(setor.auditor_nome || "Não definido")}<br>
-            <strong>Periodicidade:</strong> ${escapeHtml(periodicidade)}
+          <p style="margin-top:12px;color:var(--text-secondary, #94a3b8);">
+            <strong style="color:var(--text-primary, #e2e8f0);">Auditor:</strong> <span>${escapeHtml(setor.auditor_nome || "Não definido")}</span><br>
+            <strong style="color:var(--text-primary, #e2e8f0);">Periodicidade:</strong> <span>${escapeHtml(periodicidade)}</span><br>
+            <span style="display:inline-flex; align-items:center; gap:7px; margin-top:5px; color:var(--text-secondary, #94a3b8); font-size:0.9rem;">
+              <i class="icon-calendar-clock" aria-hidden="true"></i>
+              <strong style="color:var(--text-primary, #e2e8f0);">Próxima auditoria:</strong>
+              <span>${escapeHtml(formatarProximaAuditoria(setor.proxima_auditoria_em))}</span>
+            </span>
           </p>
 
           ${!auditorDefinido ? `
@@ -203,10 +218,12 @@ function renderizarSetores() {
           ` : ""}
         </div>
 
-        <div class="sector-footer">
-          <span>${possuiScoreFinalizado
-            ? `Último Score: <strong class="${scoreClass}">${scoreNumber.toFixed(2)}%</strong>`
-            : '<span class="sector-no-score">Nunca auditado</span>'}</span>
+        <div class="sector-footer" style="align-items:flex-start;">
+          <div style="display:flex; flex-direction:column; gap:10px; min-width:0;">
+            <span>${possuiScoreFinalizado
+              ? `Último Score: <strong class="${scoreClass}">${scoreNumber.toFixed(2)}%</strong>`
+              : '<span class="sector-no-score">Nunca auditado</span>'}</span>
+          </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
             <button class="btn-primary" type="button" data-view-sector-history="${setor.id}">Ver evolução</button>
             ${isAdmin ? `<button class="btn-primary" type="button" onclick='iniciarEdicao(${JSON.stringify(setor)})'>Editar</button>` : ''}

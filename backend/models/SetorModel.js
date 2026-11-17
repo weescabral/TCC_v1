@@ -25,6 +25,7 @@ async function listar(empresaId, usuario = null) {
        u.nome AS auditor_nome,
        u.email AS auditor_email,
        s.periodicidade_auditoria,
+       DATE_FORMAT(s.proxima_auditoria_em, '%Y-%m-%d') AS proxima_auditoria_em,
        s.ativo,
        s.motivo_inativacao,
        s.inativado_em
@@ -64,6 +65,7 @@ async function buscarPorId(id, empresaId, incluirInativos = true) {
        u.nome AS auditor_nome,
        u.email AS auditor_email,
        s.periodicidade_auditoria,
+       DATE_FORMAT(s.proxima_auditoria_em, '%Y-%m-%d') AS proxima_auditoria_em,
        s.ativo,
        s.motivo_inativacao,
        s.inativado_em
@@ -103,6 +105,20 @@ async function criar(empresaId, dados) {
       ]
     );
 
+    await connection.query(
+      `UPDATE setores
+       SET proxima_auditoria_em = DATE(CASE periodicidade_auditoria
+         WHEN 'semanal' THEN DATE_ADD(criado_em, INTERVAL 1 WEEK)
+         WHEN 'quinzenal' THEN DATE_ADD(criado_em, INTERVAL 15 DAY)
+         WHEN 'bimestral' THEN DATE_ADD(criado_em, INTERVAL 2 MONTH)
+         WHEN 'trimestral' THEN DATE_ADD(criado_em, INTERVAL 3 MONTH)
+         WHEN 'semestral' THEN DATE_ADD(criado_em, INTERVAL 6 MONTH)
+         WHEN 'anual' THEN DATE_ADD(criado_em, INTERVAL 1 YEAR)
+         ELSE DATE_ADD(criado_em, INTERVAL 1 MONTH)
+       END)
+       WHERE id = ? AND empresa_id = ?`,
+      [result.insertId, empresaId]
+    );
     await connection.commit();
     return buscarPorId(result.insertId, empresaId);
   } catch (error) {
@@ -115,24 +131,26 @@ async function criar(empresaId, dados) {
 
 async function atualizar(id, empresaId, dados) {
   await db.query(
-    `UPDATE setores
-     SET nome = ?,
-         descricao = ?,
-         responsavel = ?,
-         localizacao = ?,
-         auditor_id = ?,
-         periodicidade_auditoria = ?
-     WHERE id = ? AND empresa_id = ? AND ativo = TRUE`,
-    [
-      dados.nome,
-      dados.descricao || null,
-      dados.responsavel || null,
-      dados.localizacao || null,
-      dados.auditor_id,
-      dados.periodicidade_auditoria || 'mensal',
-      id,
-      empresaId
-    ]
+    `UPDATE setores s
+     SET s.nome = ?,
+         s.descricao = ?,
+         s.responsavel = ?,
+         s.localizacao = ?,
+         s.auditor_id = ?,
+         s.periodicidade_auditoria = ?,
+         s.proxima_auditoria_em = DATE(CASE ?
+           WHEN 'semanal' THEN DATE_ADD(COALESCE((SELECT MAX(a.finalizada_em) FROM auditorias a WHERE a.setor_id = s.id AND a.status = 'finalizada'), s.criado_em), INTERVAL 1 WEEK)
+           WHEN 'quinzenal' THEN DATE_ADD(COALESCE((SELECT MAX(a.finalizada_em) FROM auditorias a WHERE a.setor_id = s.id AND a.status = 'finalizada'), s.criado_em), INTERVAL 15 DAY)
+           WHEN 'bimestral' THEN DATE_ADD(COALESCE((SELECT MAX(a.finalizada_em) FROM auditorias a WHERE a.setor_id = s.id AND a.status = 'finalizada'), s.criado_em), INTERVAL 2 MONTH)
+           WHEN 'trimestral' THEN DATE_ADD(COALESCE((SELECT MAX(a.finalizada_em) FROM auditorias a WHERE a.setor_id = s.id AND a.status = 'finalizada'), s.criado_em), INTERVAL 3 MONTH)
+           WHEN 'semestral' THEN DATE_ADD(COALESCE((SELECT MAX(a.finalizada_em) FROM auditorias a WHERE a.setor_id = s.id AND a.status = 'finalizada'), s.criado_em), INTERVAL 6 MONTH)
+           WHEN 'anual' THEN DATE_ADD(COALESCE((SELECT MAX(a.finalizada_em) FROM auditorias a WHERE a.setor_id = s.id AND a.status = 'finalizada'), s.criado_em), INTERVAL 1 YEAR)
+           ELSE DATE_ADD(COALESCE((SELECT MAX(a.finalizada_em) FROM auditorias a WHERE a.setor_id = s.id AND a.status = 'finalizada'), s.criado_em), INTERVAL 1 MONTH)
+         END)
+     WHERE s.id = ? AND s.empresa_id = ? AND s.ativo = TRUE`,
+    [dados.nome, dados.descricao || null, dados.responsavel || null,
+     dados.localizacao || null, dados.auditor_id,
+     dados.periodicidade_auditoria || 'mensal', dados.periodicidade_auditoria || 'mensal', id, empresaId]
   );
 
   return buscarPorId(id, empresaId);
@@ -160,7 +178,7 @@ async function listarInativos(empresaId) {
        s.id, s.codigo, s.empresa_id, s.nome, s.descricao, s.responsavel,
        s.localizacao, s.criado_por, s.criado_em, s.auditor_id,
        u.nome AS auditor_nome, u.email AS auditor_email, u.ativo AS auditor_ativo,
-       s.periodicidade_auditoria, s.ativo, s.motivo_inativacao, s.inativado_em
+       s.periodicidade_auditoria, DATE_FORMAT(s.proxima_auditoria_em, '%Y-%m-%d') AS proxima_auditoria_em, s.ativo, s.motivo_inativacao, s.inativado_em
      FROM setores s
      LEFT JOIN usuarios u ON u.id = s.auditor_id
      WHERE s.empresa_id = ? AND s.ativo = FALSE

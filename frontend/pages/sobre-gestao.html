@@ -15,6 +15,27 @@
     .reports-guide-action a:hover { background:#f2ad00; border-color:#f2ad00; }
     html[data-theme="escuro"] .guia-relatorios-grid .guia-senso-card { background:rgba(24,36,55,.80); }
     html[data-theme="escuro"] .guia-relatorios-grid .guia-senso-card h3 { color:#e5edf7; }
+  
+    .guia-feature-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .guia-feature-card { padding:20px; border:1px solid var(--borda); border-radius:14px; background:var(--branco); }
+    .guia-feature-card h3 { display:flex; align-items:center; gap:9px; color:var(--azul); font-size:15px; margin-bottom:9px; }
+    .guia-feature-card h3 i { color:#d99500; font-size:18px; }
+    .guia-feature-card p, .guia-feature-card li { color:var(--muted); font-size:13px; line-height:1.7; }
+    .guia-feature-card ul { padding-left:18px; margin-top:8px; display:grid; gap:5px; }
+    .guia-inline-table { width:100%; border-collapse:collapse; margin-top:12px; font-size:13px; }
+    .guia-inline-table th,.guia-inline-table td { padding:10px 12px; border-bottom:1px solid var(--borda); text-align:left; }
+    .guia-inline-table th { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+    .guia-inline-table td { color:var(--texto); }
+    .guia-tag { display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; font-size:11px; font-weight:800; background:#fff3cf; color:#795400; }
+    .guia-timeline { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:16px; }
+    .guia-timeline-step { padding:14px; border-radius:12px; background:#f8fafc; border:1px solid var(--borda); }
+    .guia-timeline-step b { display:block; color:var(--azul); font-size:13px; margin-bottom:5px; }
+    .guia-timeline-step span { color:var(--muted); font-size:12px; line-height:1.6; }
+    html[data-theme="escuro"] .guia-feature-card { background:rgba(24,36,55,.80); border-color:rgba(148,163,184,.22); }
+    html[data-theme="escuro"] .guia-feature-card h3, html[data-theme="escuro"] .guia-inline-table td, html[data-theme="escuro"] .guia-timeline-step b { color:#e5edf7; }
+    html[data-theme="escuro"] .guia-timeline-step { background:rgba(15,23,42,.55); border-color:rgba(148,163,184,.2); }
+    @media(max-width:760px) { .guia-feature-grid { grid-template-columns:1fr; } .guia-timeline { grid-template-columns:1fr; } }
+
   </style>
 </head>
 <body>
@@ -28,7 +49,7 @@
         <div>
           <span class="guia-eyebrow">CENTRAL DE INFORMAÇÕES</span>
           <h2>Como funciona o Sensus 5S?</h2>
-          <p>Este guia explica a metodologia, o preenchimento do checklist, a leitura das cores e o cálculo dos resultados das auditorias.</p>
+          <p>Este guia apresenta a metodologia 5S e orienta sobre auditorias, programação automática, planos de ação, indicadores, histórico e relatórios do Sensus.</p>
         </div>
       </section>
 
@@ -187,6 +208,108 @@
           <div class="reports-guide-action">
             <a class="btn-primary" href="./relatorios.html"><i class="icon-file-chart-column"></i> Acessar Central de Relatórios</a>
           </div>
+        </div>
+      </section>
+
+
+      <section class="guia-section">
+        <div class="guia-section-heading">
+          <span class="guia-step">06</span>
+          <div><h2>O ciclo de gestão no Sensus 5S</h2><p>Da preparação do setor ao acompanhamento dos resultados.</p></div>
+        </div>
+        <div class="card guia-panel">
+          <p class="guia-body-copy">O Sensus 5S organiza o trabalho em um ciclo contínuo. A auditoria identifica a situação do setor; os planos de ação ajudam a tratar os pontos de melhoria; e os indicadores permitem acompanhar os resultados ao longo do tempo.</p>
+          <div class="guia-timeline">
+            <div class="guia-timeline-step"><b>1. Preparar</b><span>Cadastrar o setor, indicar o auditor responsável e definir a periodicidade das avaliações.</span></div>
+            <div class="guia-timeline-step"><b>2. Auditar</b><span>Responder aos critérios dos cinco sensos, registrar observações e anexar evidências quando necessário.</span></div>
+            <div class="guia-timeline-step"><b>3. Analisar</b><span>Conferir o resultado geral, a classificação e o desempenho individual de cada senso.</span></div>
+            <div class="guia-timeline-step"><b>4. Agir</b><span>Tratar os apontamentos por meio dos planos de ação, com prioridade e prazo definidos.</span></div>
+            <div class="guia-timeline-step"><b>5. Acompanhar</b><span>Monitorar os planos, consultar o histórico e observar a evolução dos setores.</span></div>
+            <div class="guia-timeline-step"><b>6. Melhorar</b><span>Realizar novas auditorias e utilizar os resultados para orientar a melhoria contínua.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="guia-section">
+        <div class="guia-section-heading">
+          <span class="guia-step">07</span>
+          <div><h2>Programação automática das auditorias</h2><p>Entenda como o Sensus calcula a próxima avaliação de cada setor.</p></div>
+        </div>
+        <div class="card guia-panel">
+          <p class="guia-body-copy">Cada setor possui uma periodicidade de auditoria. A programação inicial considera a data de cadastro do setor; depois que uma auditoria periódica é concluída, a próxima data é recalculada a partir da data real de conclusão.</p>
+          <table class="guia-inline-table">
+            <thead><tr><th>Periodicidade</th><th>Intervalo utilizado</th></tr></thead>
+            <tbody>
+              <tr><td>Semanal</td><td>7 dias</td></tr>
+              <tr><td>Quinzenal</td><td>15 dias</td></tr>
+              <tr><td>Mensal</td><td>1 mês</td></tr>
+              <tr><td>Bimestral</td><td>2 meses</td></tr>
+              <tr><td>Trimestral</td><td>3 meses</td></tr>
+              <tr><td>Semestral</td><td>6 meses</td></tr>
+              <tr><td>Anual</td><td>1 ano</td></tr>
+            </tbody>
+          </table>
+          <div class="guia-callout"><i class="icon-calendar-clock"></i><p><strong>Exemplo:</strong> se um setor com periodicidade quinzenal concluir uma auditoria em 17/11/2026, a próxima data programada será 02/12/2026. A data também pode ser consultada no cartão do setor e na tela de conclusão da auditoria.</p></div>
+          <p class="guia-muted-note">Auditorias extraordinárias não alteram o calendário regular do setor. A programação é apresentada como data prevista para a próxima auditoria periódica.</p>
+        </div>
+      </section>
+
+      <section class="guia-section">
+        <div class="guia-section-heading">
+          <span class="guia-step">08</span>
+          <div><h2>Gestão dos planos de ação</h2><p>Transforme os apontamentos identificados em ações acompanháveis.</p></div>
+        </div>
+        <div class="card guia-panel">
+          <p class="guia-body-copy">Ao finalizar uma auditoria, o sistema gera planos de ação para os critérios sinalizados para tratamento. Cada plano fica vinculado à auditoria, ao setor e ao critério que originou o apontamento.</p>
+          <h3 class="guia-subtitle">Prioridade automática pelo peso do critério</h3>
+          <table class="guia-inline-table">
+            <thead><tr><th>Peso do critério</th><th>Prioridade inicial</th><th>Orientação</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><span class="guia-tag">Baixa</span></td><td>Tratar conforme o planejamento da equipe.</td></tr>
+              <tr><td>2</td><td><span class="guia-tag">Média</span></td><td>Programar a correção e acompanhar sua execução.</td></tr>
+              <tr><td>3</td><td><span class="guia-tag">Alta</span></td><td>Dar maior urgência ao tratamento do apontamento.</td></tr>
+            </tbody>
+          </table>
+          <h3 class="guia-subtitle">Prazo e informações do plano</h3>
+          <p class="guia-body-copy">O prazo inicial é sugerido automaticamente conforme a periodicidade do setor, contado a partir da conclusão real da auditoria. Por exemplo, em um setor quinzenal, o prazo inicial será de 15 dias após a conclusão. O prazo pode ser ajustado manualmente.</p>
+          <div class="guia-feature-grid">
+            <article class="guia-feature-card"><h3><i class="icon-search"></i> Causa raiz</h3><p>Campo preenchido pela equipe para registrar por que o problema aconteceu. A análise deve considerar as condições reais do setor.</p></article>
+            <article class="guia-feature-card"><h3><i class="icon-target"></i> Resultado esperado</h3><p>Descreva qual situação deverá existir após a ação corretiva e como a melhoria poderá ser reconhecida.</p></article>
+          </div>
+          <h3 class="guia-subtitle">Acompanhamento dos planos</h3>
+          <p class="guia-body-copy">Os planos podem ser acompanhados pelos status Pendente, Em andamento, Concluído ou Cancelado. A prioridade e o prazo iniciais são sugestões automáticas; a equipe responsável deve manter as informações atualizadas conforme a execução da ação.</p>
+        </div>
+      </section>
+
+      <section class="guia-section">
+        <div class="guia-section-heading">
+          <span class="guia-step">09</span>
+          <div><h2>Histórico, rascunhos e evidências</h2><p>Consulte avaliações anteriores ou continue uma auditoria interrompida.</p></div>
+        </div>
+        <div class="card guia-panel">
+          <div class="guia-feature-grid">
+            <article class="guia-feature-card"><h3><i class="icon-check-circle-2"></i> Auditorias finalizadas</h3><p>Permitem consultar os resultados registrados, visualizar respostas e evidências e acompanhar os dados da avaliação concluída.</p></article>
+            <article class="guia-feature-card"><h3><i class="icon-pencil-line"></i> Rascunhos</h3><p>Representam auditorias ainda não finalizadas. É possível retomar o checklist e continuar do ponto em que o trabalho foi interrompido, preservando as respostas salvas.</p></article>
+            <article class="guia-feature-card"><h3><i class="icon-play-circle"></i> Retomar auditoria</h3><p>Abra o rascunho pelo histórico para continuar a avaliação. Os sensos já concluídos permanecem registrados e o fluxo segue a partir da etapa pendente.</p></article>
+            <article class="guia-feature-card"><h3><i class="icon-trash-2"></i> Excluir rascunho</h3><p>A exclusão está disponível somente quando nenhum senso foi concluído. Rascunhos com pelo menos um senso concluído devem ser retomados; auditorias finalizadas não são excluídas por essa opção.</p></article>
+          </div>
+          <p class="guia-callout"><i class="icon-camera"></i><strong> Evidências:</strong> fotos e demais registros anexados ajudam a contextualizar a avaliação e podem ser consultados no histórico da auditoria.</p>
+        </div>
+      </section>
+
+      <section class="guia-section">
+        <div class="guia-section-heading">
+          <span class="guia-step">10</span>
+          <div><h2>Dashboard e administração</h2><p>Use os indicadores e os dados institucionais para apoiar a gestão.</p></div>
+        </div>
+        <div class="card guia-panel">
+          <div class="guia-feature-grid">
+            <article class="guia-feature-card"><h3><i class="icon-gauge"></i> Indicadores do Dashboard</h3><p>O painel reúne indicadores de desempenho e acompanhamento, como índice atual, evolução das auditorias, desempenho por senso, resultados por setor e situação das ações. Utilize os gráficos em conjunto com o histórico para interpretar tendências.</p></article>
+            <article class="guia-feature-card"><h3><i class="icon-users"></i> Perfis e permissões</h3><p>O administrador acompanha a visão geral da empresa e gerencia setores e usuários. O auditor visualiza os setores vinculados à sua responsabilidade, conforme as permissões do sistema.</p></article>
+            <article class="guia-feature-card"><h3><i class="icon-building-2"></i> Dados institucionais</h3><p>No perfil, o administrador pode cadastrar nome da empresa, endereço, telefone e e-mail institucional. O CNPJ é opcional. Essas informações identificam a organização nos cabeçalhos dos relatórios.</p></article>
+            <article class="guia-feature-card"><h3><i class="icon-file-chart-column"></i> Relatórios gerenciais</h3><p>Os documentos reúnem resultados das auditorias finalizadas e podem apoiar reuniões, prestação de contas, análise de desempenho e definição de prioridades de melhoria.</p></article>
+          </div>
+          <p class="guia-muted-note">Os indicadores devem ser interpretados considerando o período selecionado, os setores acessíveis ao perfil autenticado e a existência de auditorias finalizadas.</p>
         </div>
       </section>
 

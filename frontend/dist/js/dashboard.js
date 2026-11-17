@@ -48,6 +48,18 @@ function formatarPercentual(valor) {
   return `${Number(valor || 0).toFixed(1)}%`;
 }
 
+function nomeSensoEmPortugues(nome) {
+  const chave = String(nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  const nomes = {
+    seiri: 'Utilização', utilizacao: 'Utilização',
+    seiton: 'Organização', organizacao: 'Organização',
+    seiso: 'Limpeza', limpeza: 'Limpeza',
+    seiketsu: 'Padronização', padronizacao: 'Padronização',
+    shitsuke: 'Disciplina', disciplina: 'Disciplina'
+  };
+  return nomes[chave] || String(nome || 'Senso');
+}
+
 function formatarData(data) {
   if (!data) {
     return 'Sem data';
@@ -382,7 +394,7 @@ function renderizarSensos(porSenso = []) {
   graficoSensos = new Chart(contexto, {
     type: 'bar',
     data: {
-      labels: porSenso.map((item) => item.senso),
+      labels: porSenso.map((item) => nomeSensoEmPortugues(item.senso)),
       datasets: [
         {
           label: 'Média',
@@ -430,7 +442,7 @@ function renderizarRadar(porSenso = []) {
   graficoRadar = new Chart(contexto, {
     type: 'radar',
     data: {
-      labels: porSenso.map((item) => item.senso),
+      labels: porSenso.map((item) => nomeSensoEmPortugues(item.senso)),
       datasets: [
         {
           label: 'Resultado 5S',
@@ -595,7 +607,7 @@ function renderizarGraficoComparativo(itens = []) {
   graficoComparativoSensos = new Chart(canvas.getContext('2d'), {
     type: 'bar',
     data: {
-      labels: itens.map(item => item.nome || item.senso),
+      labels: itens.map(item => nomeSensoEmPortugues(item.nome || item.senso)),
       datasets: [
         { label: 'Auditoria anterior', data: itens.map(item => item.anterior == null ? null : Number(item.anterior)),
           backgroundColor: '#8290a3', borderRadius: 6, barThickness: 14 },
@@ -632,7 +644,7 @@ function renderizarComparativoSensos(itens = [], quantidadeSetores = 0) {
     const classe = variacao > 0.05 ? 'trend-up' : variacao < -0.05 ? 'trend-down' : 'trend-flat';
     const icone = variacao > 0.05 ? '↑' : variacao < -0.05 ? '↓' : '—';
     return `<tr>
-      <td><strong>${escaparHtml(item.nome || item.senso)}</strong></td>
+      <td><strong>${escaparHtml(nomeSensoEmPortugues(item.nome || item.senso))}</strong></td>
       <td>${item.anterior == null ? '—' : `<strong class="comparison-previous-value">${formatarPercentual(item.anterior)}</strong>`}</td>
       <td><strong class="${classeDesempenho(item.atual)}">${formatarPercentual(item.atual)}</strong></td>
       <td><span class="comparison-trend ${classe}">${icone} ${sinal}${variacao.toFixed(1)} p.p.</span></td>

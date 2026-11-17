@@ -153,22 +153,27 @@ async function periodico(empresaId, inicio, fim, usuario) {
 }
 
 async function gerar(tipo, filtros, empresaId, usuario) {
-  if (tipo === 'auditoria') return { tipo, auditoria: await buscarAuditoria(filtros.auditoria_id, empresaId, usuario) };
-  if (tipo === 'setor') {
+  let dados;
+  if (tipo === 'auditoria') dados = { tipo, auditoria: await buscarAuditoria(filtros.auditoria_id, empresaId, usuario) };
+  else if (tipo === 'setor') {
     if (!filtros.setor_id) { const e = new Error('Selecione um setor.'); e.status=400; throw e; }
-    return { tipo, ...(await porSetor(empresaId, filtros.setor_id, filtros.inicio, filtros.fim, usuario)) };
-  }
-  if (tipo === 'gerencial') {
+    dados = { tipo, ...(await porSetor(empresaId, filtros.setor_id, filtros.inicio, filtros.fim, usuario)) };
+  } else if (tipo === 'gerencial') {
     if (usuario?.perfil !== 'administrador') { const e = new Error('O relatório gerencial completo é exclusivo do administrador.'); e.status=403; throw e; }
-    return { tipo, ...(await gerencial(empresaId)) };
-  }
-  if (tipo === 'periodico') {
+    dados = { tipo, ...(await gerencial(empresaId)) };
+  } else if (tipo === 'periodico') {
     if (!filtros.inicio || !filtros.fim || filtros.inicio > filtros.fim) { const e = new Error('Informe um período válido.'); e.status=400; throw e; }
-    return { tipo, ...(await periodico(empresaId, filtros.inicio, filtros.fim, usuario)) };
+    dados = { tipo, ...(await periodico(empresaId, filtros.inicio, filtros.fim, usuario)) };
+  } else {
+    const error = new Error('Tipo de relatório inválido.');
+    error.status = 400;
+    throw error;
   }
-  const error = new Error('Tipo de relatório inválido.');
-  error.status = 400;
-  throw error;
+  // Dados institucionais aparecem em todos os modelos de relatório.
+  const [[empresa]] = await db.query(
+    'SELECT nome, cnpj, email, telefone, endereco FROM empresas WHERE id=? LIMIT 1', [empresaId]
+  );
+  return { ...dados, empresa: empresa || null };
 }
 
 module.exports = { opcoes, gerar };

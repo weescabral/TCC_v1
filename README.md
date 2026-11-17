@@ -378,3 +378,5 @@ Projeto desenvolvido com foco na integração entre tecnologia, gestão e melhor
 <p align="center">
   © 2026 Sensus 5S. Todos os direitos reservados.
 </p>
+### Programação automática de auditorias
+Execute uma única vez `backend/database/migrations/007_programacao_automatica_auditorias.sql` no banco MySQL para habilitar a data de próxima auditoria por setor. A primeira data é calculada a partir do cadastro do setor; os ciclos seguintes são calculados a partir da conclusão da auditoria periódica anterior.

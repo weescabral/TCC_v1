@@ -105,41 +105,15 @@ async function sincronizarAlertasDinamicos(usuario) {
   const filtroSetorAuditor = ehAuditor ? 'AND s.auditor_id = ?' : '';
   const [setores] = await db.query(
     `SELECT s.id, s.nome, s.periodicidade_auditoria,
-            COALESCE(ultima.data_ultima, s.criado_em) AS data_base,
-            CASE
-              WHEN s.periodicidade_auditoria = 'semanal' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 1 WEEK)
-              WHEN s.periodicidade_auditoria = 'quinzenal' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 2 WEEK)
-              WHEN s.periodicidade_auditoria = 'mensal' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 1 MONTH)
-              WHEN s.periodicidade_auditoria = 'bimestral' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 2 MONTH)
-              WHEN s.periodicidade_auditoria = 'trimestral' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 3 MONTH)
-              WHEN s.periodicidade_auditoria = 'semestral' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 6 MONTH)
-              WHEN s.periodicidade_auditoria = 'anual' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 1 YEAR)
-              ELSE DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 1 MONTH)
-            END AS proxima_auditoria,
-            DATEDIFF(
-              CASE
-                WHEN s.periodicidade_auditoria = 'semanal' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 1 WEEK)
-                WHEN s.periodicidade_auditoria = 'quinzenal' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 2 WEEK)
-                WHEN s.periodicidade_auditoria = 'mensal' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 1 MONTH)
-                WHEN s.periodicidade_auditoria = 'bimestral' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 2 MONTH)
-                WHEN s.periodicidade_auditoria = 'trimestral' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 3 MONTH)
-                WHEN s.periodicidade_auditoria = 'semestral' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 6 MONTH)
-                WHEN s.periodicidade_auditoria = 'anual' THEN DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 1 YEAR)
-                ELSE DATE_ADD(COALESCE(ultima.data_ultima, s.criado_em), INTERVAL 1 MONTH)
-              END,
-              CURDATE()
-            ) AS dias_restantes
+            s.proxima_auditoria_em AS proxima_auditoria,
+            DATEDIFF(s.proxima_auditoria_em, DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00'))) AS dias_restantes
      FROM setores s
-     LEFT JOIN (
-       SELECT setor_id, MAX(data_auditoria) AS data_ultima
-       FROM auditorias
-       WHERE empresa_id = ? AND status = 'finalizada'
-       GROUP BY setor_id
-     ) ultima ON ultima.setor_id = s.id
-     WHERE s.empresa_id = ? AND s.ativo = TRUE ${filtroSetorAuditor}
-     HAVING proxima_auditoria <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-     ORDER BY proxima_auditoria ASC`,
-    ehAuditor ? [empresaId, empresaId, usuarioId] : [empresaId, empresaId]
+     WHERE s.empresa_id = ? AND s.ativo = TRUE
+       AND s.proxima_auditoria_em IS NOT NULL
+       ${filtroSetorAuditor}
+       AND s.proxima_auditoria_em <= DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')), INTERVAL 7 DAY)
+     ORDER BY s.proxima_auditoria_em ASC`,
+    ehAuditor ? [empresaId, usuarioId] : [empresaId]
   );
 
   const idsSetoresVencidos = setores.map((s) => Number(s.id));

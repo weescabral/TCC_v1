@@ -11,5 +11,6 @@ router.get('/:id', asyncHandler(AuditoriaController.buscar));
 router.post('/', asyncHandler(AuditoriaController.criar));
 router.post('/:id/respostas', asyncHandler(AuditoriaController.salvarResposta));
 router.post('/:id/finalizar', asyncHandler(AuditoriaController.finalizar));
+router.delete('/:id/rascunho', asyncHandler(AuditoriaController.excluirRascunho));
 
 module.exports = router;

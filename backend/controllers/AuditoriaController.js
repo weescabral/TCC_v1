@@ -1,5 +1,7 @@
 const AuditoriaModel = require('../models/AuditoriaModel');
 const SetorModel = require('../models/SetorModel');
+const EvidenciaModel = require('../models/EvidenciaModel');
+const CloudinaryService = require('../config/cloudinary');
 
 function auditorTemAcesso(req, auditoria) {
   return req.usuario.perfil !== 'auditor' || Number(auditoria?.setor_auditor_id) === Number(req.usuario.id);
@@ -29,10 +31,6 @@ async function criar(req, res) {
   const prazo = req.body.prazo;
   const notificar_em = req.body.notificar_em || null;
 
-  if (!prazo) {
-    return res.status(400).json({ erro: 'Informe o prazo da auditoria.' });
-  }
-
   if (tipo === 'extraordinaria' && !req.body.motivo_extraordinaria?.trim()) {
     return res.status(400).json({ erro: 'Informe o motivo da auditoria extraordinária.' });
   }
@@ -46,7 +44,7 @@ async function criar(req, res) {
     motivo_extraordinaria: req.body.motivo_extraordinaria,
     prazo,
     notificar_em,
-    data_auditoria: req.body.data_auditoria || null,
+    data_auditoria: null,
   });
 
   return res.status(201).json(auditoria);
@@ -106,6 +104,32 @@ async function salvarResposta(req, res) {
   });
 }
 
+
+async function excluirRascunho(req, res) {
+  const auditoria = await AuditoriaModel.buscarPorId(req.params.id, req.usuario.empresa_id);
+  if (!auditoria) return res.status(404).json({ erro: 'Auditoria não encontrada.' });
+  if (!auditorTemAcesso(req, auditoria)) return res.status(403).json({ erro: 'Você não possui acesso a esta auditoria.' });
+  const evidencias = await EvidenciaModel.listarPorAuditoria(req.params.id, req.usuario.empresa_id);
+  const resultado = await AuditoriaModel.excluirRascunho(req.params.id, req.usuario.empresa_id);
+  if (!resultado.excluida) return res.status(409).json({ erro: resultado.motivo || 'Esta auditoria não pode ser excluída.' });
+  // Após a exclusão transacional no banco, remove também os arquivos associados.
+  for (const evidencia of evidencias) {
+    try {
+      if (String(evidencia.caminho || '').includes('res.cloudinary.com')) {
+        await CloudinaryService.excluirArquivo(evidencia.nome_arquivo, evidencia.mime_type);
+      } else if (String(evidencia.caminho || '').startsWith('/uploads/')) {
+        const fs = require('fs/promises');
+        const path = require('path');
+        const caminhoFisico = path.join(__dirname, '..', evidencia.caminho.replace(/^\/uploads\//, 'uploads/'));
+        try { await fs.unlink(caminhoFisico); } catch (erroArquivo) { if (erroArquivo.code !== 'ENOENT') throw erroArquivo; }
+      }
+    } catch (erroArquivo) {
+      console.error('Rascunho excluído, mas não foi possível remover um arquivo de evidência:', erroArquivo.message);
+    }
+  }
+  return res.json({ mensagem: 'Rascunho excluído com sucesso.' });
+}
+
 async function finalizar(req, res) {
   const existente = await AuditoriaModel.buscarPorId(req.params.id, req.usuario.empresa_id);
   if (!existente) return res.status(404).json({ erro: 'Auditoria não encontrada.' });
@@ -127,4 +151,4 @@ async function finalizar(req, res) {
   });
 }
 
-module.exports = { listar, buscar, criar, salvarResposta, finalizar };
+module.exports = { listar, buscar, criar, salvarResposta, finalizar, excluirRascunho };

@@ -2502,11 +2502,11 @@ html[data-theme="escuro"] #profile-email:disabled {
 
 /* Cartões de setores conforme o layout de referência */
 .sector-grid { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:stretch; }
-.sector-card { min-width:0; display:flex; flex-direction:column; justify-content:space-between; gap:22px; }
+.sector-card { min-width:0; display:flex; flex-direction:column; justify-content:flex-start; gap:16px; }
 .sector-card > div:first-child { min-width:0; }
 .sector-card h3 { display:flex; align-items:center; gap:8px; overflow-wrap:anywhere; }
 .sector-card .badge { flex-shrink:0; }
-.sector-card .sector-footer { align-items:flex-end; gap:12px; flex-wrap:wrap; }
+.sector-card .sector-footer { align-items:flex-end; gap:12px; flex-wrap:wrap; margin-top:4px; }
 .sector-card .sector-footer > span { line-height:1.5; }
 .sector-card .sector-footer > div { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
 .sector-card .sector-footer button,
@@ -2989,6 +2989,14 @@ html[data-theme="escuro"] .dashboard-kpis .stat-card p.performance-low { color:#
 
 .dashboard-comparison-card .comparison-table td:first-child strong {
   font-weight: 750;
+}
+
+/* Nomes dos sensos com contraste reforçado na tabela de evolução. */
+.dashboard-comparison-card .comparison-table td:first-child strong {
+  color: #334155 !important;
+}
+html[data-theme="escuro"] .dashboard-comparison-card .comparison-table td:first-child strong {
+  color: #e2e8f0 !important;
 }
 
 .dashboard-comparison-card .comparison-table tbody tr:last-child td {
@@ -3599,3 +3607,15 @@ html[data-theme="escuro"] .notification-dot.has-notifications { border-color: #1
   .notification-panel-actions { align-items: flex-start; }
   .notification-item-title-row { align-items: flex-start; }
 }
+
+.profile-company-section{margin:18px 0;padding:16px;border:1px solid var(--border-color,rgba(148,163,184,.25));border-radius:14px;background:rgba(148,163,184,.05)}.profile-company-section h3{margin:0 0 6px}.profile-company-section[hidden]{display:none}
+
+.report-company-header{padding:16px 18px;margin-bottom:18px;border:1px solid var(--borda);border-left:4px solid var(--amarelo);border-radius:12px;background:var(--surface,rgba(148,163,184,.06))}.report-company-header h2{margin:0 0 5px}.report-company-header p{margin:2px 0;color:var(--muted);font-size:13px}.profile-company-section{margin:18px 0;padding:16px;border:1px solid var(--borda);border-radius:14px;background:rgba(148,163,184,.05)}.profile-company-section h3{margin:0 0 6px}.profile-company-section[hidden]{display:none}
+
+/* Histórico: ações dos rascunhos em uma única linha */
+.history-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
+.history-actions .history-delete-draft { margin-left:auto; min-width:150px; }
+
+/* Histórico: botões dos rascunhos alinhados na mesma linha */
+.history-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
+.history-actions .history-delete-draft { margin-left:auto; min-width:150px; }

@@ -14,7 +14,7 @@ function esc(v='') { return String(v ?? '').replaceAll('&','&amp;').replaceAll('
 function dataBR(v) { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? esc(v) : d.toLocaleDateString('pt-BR'); }
 function percentual(v) { const n = Number(v); return Number.isFinite(n) ? `${n.toLocaleString('pt-BR',{maximumFractionDigits:1})}%` : '—'; }
 function classePercentual(v) { const n=Number(v||0); return n<50?'performance-critical':n<70?'performance-low':n<85?'performance-medium':'performance-good'; }
-function statusLabel(v) { return v === 'finalizada' ? 'Finalizada' : v === 'em_andamento' ? 'Em andamento' : (v || 'Não informado'); }
+function statusLabel(v) { return v === 'finalizada' ? 'Finalizada' : v === 'em_andamento' ? 'Em andamento' : v === 'rascunho' ? 'Rascunho' : (v || 'Não informado'); }
 function textoTipo(v) { return v === 'extraordinaria' ? 'Extraordinária' : 'Periódica'; }
 function filtrar() {
   const termo = document.getElementById('buscaHistorico').value.trim().toLocaleLowerCase('pt-BR');
@@ -37,11 +37,43 @@ function renderizar(lista) {
         <div style="text-align:right"><span class="history-badge ${esc(a.status)}">${esc(statusLabel(a.status))}</span><h2 class="${classePercentual(a.percentual_geral)}" style="margin-top:8px">${percentual(a.percentual_geral)}</h2><small>${esc(a.classificacao || 'Sem classificação')}</small></div>
       </div>
       ${a.motivo_extraordinaria ? `<p style="margin-top:12px"><strong>Motivo da auditoria extraordinária:</strong> ${esc(a.motivo_extraordinaria)}</p>` : ''}
-      <div class="history-actions"><button class="btn-primary" type="button" onclick="alternarDetalhe(${Number(a.id)})">${detalhesAbertos.has(Number(a.id)) ? 'Ocultar detalhes' : 'Ver respostas e evidências'}</button></div>
+      <div class="history-actions">
+        <button class="btn-primary" type="button" onclick="alternarDetalhe(${Number(a.id)})">${detalhesAbertos.has(Number(a.id)) ? 'Ocultar detalhes' : 'Ver respostas e evidências'}</button>
+        ${a.status !== 'finalizada' ? `<button class="btn-primary" type="button" onclick="retomarRascunho(${Number(a.id)})">Retomar auditoria</button>` : ''}
+        ${a.status !== 'finalizada' && Number(a.sensos_concluidos || 0) === 0 ? `<button class="btn-primary history-delete-draft" type="button" onclick="excluirRascunho(${Number(a.id)})">Excluir rascunho</button>` : ''}
+      </div>
       <div id="detalhe-${Number(a.id)}" class="history-detail" ${detalhesAbertos.has(Number(a.id)) ? '' : 'hidden'}></div>
     </article>`).join('');
   for (const id of detalhesAbertos) { if (lista.some(a => Number(a.id) === id)) carregarDetalhe(id, false); }
 }
+function retomarRascunho(id) {
+  window.location.href = `./checklist.html?retomar=${encodeURIComponent(id)}`;
+}
+async function excluirRascunho(id) {
+  const auditoria = auditoriasCache.find(a => Number(a.id) === Number(id));
+  if (!auditoria || auditoria.status === 'finalizada' || Number(auditoria.sensos_concluidos || 0) > 0) {
+    sensusNotificar?.('Este rascunho não pode ser excluído porque já possui um senso concluído.', 'warning');
+    return;
+  }
+  const confirmar = typeof window.sensusConfirm === 'function'
+    ? await window.sensusConfirm('Esta ação excluirá permanentemente o rascunho e suas respostas/evidências vinculadas. Deseja continuar?', { title: 'Excluir rascunho?', type: 'danger', confirmText: 'Excluir rascunho' })
+    : window.confirm('Excluir permanentemente este rascunho?');
+  if (!confirmar) return;
+  try {
+    const response = await fetch(`${API_URL}/auditorias/${id}/rascunho`, {
+      method: 'DELETE', headers: { Authorization: `Bearer ${obterTokenHistorico()}` }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.erro || 'Não foi possível excluir o rascunho.');
+    auditoriasCache = auditoriasCache.filter(a => Number(a.id) !== Number(id));
+    detalhesAbertos.delete(Number(id));
+    filtrar();
+    sensusNotificar?.('Rascunho excluído com sucesso.', 'success');
+  } catch (erro) {
+    sensusNotificar?.(erro.message, 'error');
+  }
+}
+
 async function alternarDetalhe(id) {
   if (detalhesAbertos.has(id)) { detalhesAbertos.delete(id); filtrar(); return; }
   detalhesAbertos.add(id); filtrar(); await carregarDetalhe(id, true);

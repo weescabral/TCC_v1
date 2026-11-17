@@ -132,7 +132,9 @@
   }
 
   function renderizarPrevia(r) {
-    let html = `<h2>${escapeHtml(tituloAtual)}</h2><p class="reports-help">Gerado em ${dataBR(new Date())}. Dados de auditorias finalizadas.</p>`;
+    const empresa = r.empresa || {};
+    const linhasEmpresa = [empresa.endereco, empresa.telefone, empresa.email, empresa.cnpj ? `CNPJ: ${empresa.cnpj}` : ''].filter(Boolean);
+    let html = `<section class="report-company-header"><h2>${escapeHtml(empresa.nome || 'Empresa não identificada')}</h2>${linhasEmpresa.map(item => `<p>${escapeHtml(item)}</p>`).join('')}</section><h2>${escapeHtml(tituloAtual)}</h2><p class="reports-help">Gerado em ${dataBR(new Date())}. Dados de auditorias finalizadas.</p>`;
     if (r.tipo === 'auditoria') {
       const a = r.auditoria;
       html += `<h3>${escapeHtml(a.codigo)} — ${escapeHtml(a.setor_nome)}</h3>
@@ -171,17 +173,20 @@
     doc.text(linhas, x, y);
     return y + linhas.length * 5;
   }
-  function tituloPDF(doc, titulo) {
-    doc.setFillColor(16,33,59); doc.rect(0,0,210,28,'F');
-    doc.setTextColor(255,191,0); doc.setFontSize(18); doc.setFont('helvetica','bold');
-    doc.text('SENSUS 5S',14,12);
-    doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.text('Gestão inteligente da metodologia 5S',14,20);
+  function tituloPDF(doc, titulo, empresa = {}) {
+    doc.setFillColor(16,33,59); doc.rect(0,0,210,38,'F');
+    doc.setTextColor(255,191,0); doc.setFontSize(16); doc.setFont('helvetica','bold');
+    doc.text('SENSUS 5S',14,10);
+    doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.text(String(empresa.nome || 'Empresa não identificada').slice(0,95),14,17);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    const contato = [empresa.endereco, empresa.telefone, empresa.email, empresa.cnpj ? `CNPJ: ${empresa.cnpj}` : ''].filter(Boolean).join(' | ');
+    if (contato) doc.text(doc.splitTextToSize(contato,180).slice(0,2),14,23);
     doc.setTextColor(16,33,59); doc.setFontSize(16); doc.setFont('helvetica','bold');
-    doc.text(titulo,14,40);
+    doc.text(titulo,14,49);
     doc.setTextColor(90,105,125); doc.setFontSize(9);
-    doc.text(`Emitido em ${new Date().toLocaleString('pt-BR')}`,14,47);
-    return 57;
+    doc.text(`Emitido em ${new Date().toLocaleString('pt-BR')}`,14,56);
+    return 64;
   }
   function secaoPDF(doc, titulo, y) {
     if (y > 260) { doc.addPage(); y = 20; }
@@ -205,7 +210,7 @@
     if (!relatorioAtual) throw new Error('Gere uma prévia antes de exportar.');
     if (!window.jspdf?.jsPDF) throw new Error('A biblioteca de PDF não carregou. Verifique sua conexão e atualize a página.');
     const doc = new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    let y = tituloPDF(doc,tituloAtual);
+    let y = tituloPDF(doc,tituloAtual,relatorioAtual.empresa || {});
     const r = relatorioAtual;
     if (r.tipo === 'auditoria') {
       const a=r.auditoria;

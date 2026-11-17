@@ -154,17 +154,21 @@ function salvarEstadoAuditoria() {
 }
 
 async function restaurarAuditoriaEmAndamento() {
+  const parametros = new URLSearchParams(window.location.search);
+  const idRetomar = parametros.get('retomar');
   const salvo = sessionStorage.getItem(STORAGE_KEY);
-  if (!salvo) return false;
+  if (!salvo && !idRetomar) return false;
 
   try {
-    const snapshot = JSON.parse(salvo);
-    if (!snapshot?.auditoriaId) {
+    let snapshot = salvo ? JSON.parse(salvo) : {};
+    const auditoriaId = idRetomar || snapshot?.auditoriaId;
+    if (idRetomar && String(snapshot?.auditoriaId || '') !== String(idRetomar)) snapshot = {};
+    if (!auditoriaId) {
       limparEstadoAuditoria();
       return false;
     }
 
-    const auditoria = await requisicao(`/auditorias/${snapshot.auditoriaId}`);
+    const auditoria = await requisicao(`/auditorias/${auditoriaId}`);
     const dadosAuditoria = auditoria?.auditoria || auditoria;
 
     if (!dadosAuditoria || ['finalizada', 'concluida', 'cancelada'].includes(String(dadosAuditoria.status || '').toLowerCase())) {
@@ -172,12 +176,22 @@ async function restaurarAuditoriaEmAndamento() {
       return false;
     }
 
-    estado.auditoriaId = snapshot.auditoriaId;
-    estado.etapaAtual = Number(snapshot.etapaAtual) || 0;
-    estado.etapasConcluidas = new Set((snapshot.etapasConcluidas || []).map(Number));
-    estado.respostasLocais = snapshot.respostasLocais || {};
+    estado.auditoriaId = auditoriaId;
     estado.auditoriaResumo = snapshot.auditoriaResumo || dadosAuditoria;
     estado.auditoriaFinalizada = false;
+    estado.respostasLocais = snapshot.respostasLocais || {};
+
+    // Ao retomar pelo histórico, reconstrói o progresso diretamente do banco,
+    // sem depender do sessionStorage do navegador/dispositivo anterior.
+    if (idRetomar) {
+      (dadosAuditoria.respostas || []).forEach(resposta => {
+        estado.respostasLocais[resposta.criterio_id] = {
+          nota: resposta.nota,
+          observacao: resposta.observacao || '',
+          evidencias: resposta.evidencias || []
+        };
+      });
+    }
 
     elementos.setorId.value = snapshot.setorId || dadosAuditoria.setor_id || '';
     elementos.tipoAuditoria.value = snapshot.tipoAuditoria || dadosAuditoria.tipo || 'periodica';
@@ -193,9 +207,22 @@ async function restaurarAuditoriaEmAndamento() {
 
     await carregarSensos();
 
-    if (estado.etapaAtual < 0 || estado.etapaAtual >= estado.sensos.length) {
-      estado.etapaAtual = 0;
+    if (idRetomar) {
+      const resultados = dadosAuditoria.resultados_sensos || [];
+      estado.etapasConcluidas = new Set();
+      estado.sensos.forEach((senso, indice) => {
+        const resultado = resultados.find(r => Number(r.senso_id) === Number(senso.id));
+        if (resultado?.status === 'concluido') estado.etapasConcluidas.add(indice);
+      });
+      const primeiraPendente = estado.sensos.findIndex((senso, indice) => !estado.etapasConcluidas.has(indice));
+      estado.etapaAtual = primeiraPendente >= 0 ? primeiraPendente : estado.sensos.length - 1;
+      sessionStorage.removeItem(STORAGE_KEY);
+    } else {
+      estado.etapaAtual = Number(snapshot.etapaAtual) || 0;
+      estado.etapasConcluidas = new Set((snapshot.etapasConcluidas || []).map(Number));
     }
+
+    if (estado.etapaAtual < 0 || estado.etapaAtual >= estado.sensos.length) estado.etapaAtual = 0;
 
     elementos.configuracaoAuditoria.classList.add('escondido');
     elementos.areaAuditoria.classList.remove('escondido');
@@ -203,6 +230,7 @@ async function restaurarAuditoriaEmAndamento() {
     elementos.botaoIniciar.disabled = true;
 
     await carregarCriteriosDoSenso();
+    if (idRetomar) window.history.replaceState({}, document.title, window.location.pathname);
     mostrarMensagem('Auditoria em andamento restaurada. Você pode continuar de onde parou.', 'sucesso');
     return true;
   } catch (erro) {
@@ -338,11 +366,22 @@ function formatarDataLocal(data) {
 
 function configurarDatasPadrao() {
   const agora = new Date();
-  const prazo = new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const aviso = new Date(prazo.getTime() - 24 * 60 * 60 * 1000);
-
   elementos.dataAuditoria.value = formatarDataLocal(agora);
-  elementos.prazoAuditoria.value = formatarDataLocal(prazo);
+  atualizarPrazoAutomatico();
+}
+
+function atualizarPrazoAutomatico() {
+  const setor = estado.setores.find((item) => Number(item.id) === Number(elementos.setorId.value));
+  const dataPrazo = setor?.proxima_auditoria_em;
+  if (!dataPrazo) {
+    elementos.prazoAuditoria.value = '';
+    elementos.notificarAuditoria.value = '';
+    return;
+  }
+  const data = String(dataPrazo).slice(0, 10);
+  elementos.prazoAuditoria.value = `${data}T23:59`;
+  const aviso = new Date(`${data}T12:00:00`);
+  aviso.setDate(aviso.getDate() - 3);
   elementos.notificarAuditoria.value = formatarDataLocal(aviso);
 }
 
@@ -362,6 +401,7 @@ function atualizarInformacoesSetor() {
   elementos.auditoriaSetorTitulo.textContent = setor.nome;
   elementos.auditoriaSetorDescricao.textContent = setor.descricao || 'Sem descrição cadastrada.';
   elementos.auditoriaSetorAuditor.textContent = `Auditor responsável: ${setor.auditor_nome || 'Não definido'} • Periodicidade: ${setor.periodicidade_auditoria || 'mensal'}`;
+  atualizarPrazoAutomatico();
 }
 
 async function carregarSetores() {
@@ -600,6 +640,7 @@ function renderizarCriterios(criterios) {
       >${respostaSalva.observacao || ''}</textarea>
 
       <div class="evidencia-criterio">
+        ${respostaSalva.evidencias?.length ? `<small class="texto-secundario">${respostaSalva.evidencias.length} evidência(s) já registrada(s): ${respostaSalva.evidencias.map(e => String(e.nome_original || e.nome_arquivo || 'Arquivo')).join(', ')}</small>` : ''}
         <label class="rotulo-observacao" for="evidencia-${criterio.id}">Evidência (opcional)</label>
         <input
           id="evidencia-${criterio.id}"
@@ -673,6 +714,8 @@ function coletarRespostas() {
 }
 
 elementos.setorId.addEventListener('change', atualizarInformacoesSetor);
+elementos.dataAuditoria.readOnly = true;
+elementos.prazoAuditoria.readOnly = true;
 
 elementos.tipoAuditoria.addEventListener('change', () => {
   const extraordinaria = elementos.tipoAuditoria.value === 'extraordinaria';
@@ -934,6 +977,22 @@ async function finalizarAuditoria() {
       `${minutos}min ${segundos}s`;
   } else {
     elementos.resultadoDuracao.textContent = '-';
+  }
+
+  // A data vem do backend após a atualização do calendário do setor.
+  // Construímos a data como local para evitar deslocamento de fuso horário.
+  const proximaAuditoriaElemento = document.getElementById('resultadoProximaAuditoria');
+  if (proximaAuditoriaElemento) {
+    const dataProgramada = resultado.proxima_auditoria_em;
+    if (dataProgramada) {
+      const [ano, mes, dia] = String(dataProgramada).slice(0, 10).split('-').map(Number);
+      const dataLocal = new Date(ano, mes - 1, dia);
+      proximaAuditoriaElemento.textContent = dataLocal.toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      });
+    } else {
+      proximaAuditoriaElemento.textContent = 'Não programada';
+    }
   }
 
   const resumo = estado.auditoriaResumo || {};
